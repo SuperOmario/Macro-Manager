@@ -30,11 +30,6 @@ func main() {
 		fmt.Println("connection is good")
 	}
 
-	// var ctx context.Context
-
-	// db.ExecContext(ctx,
-	// 	"INSERT INTO User (FName, LName, Email) VALUES ($1, $2, $3)", "Omar", "Sallam", "omarsallamala@gmail.com")
-
 	godotenv.Load()
 
 	router = gin.Default()
