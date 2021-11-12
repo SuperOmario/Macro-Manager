@@ -16,6 +16,7 @@ import (
 var router *gin.Engine
 
 func main() {
+	port := os.Getenv("PORT")
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal(err)
@@ -40,5 +41,5 @@ func main() {
 
 	initialiseRoutes()
 
-	router.Run(":8080")
+	router.Run(":" + port)
 }
