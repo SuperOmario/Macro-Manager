@@ -1,60 +1,22 @@
 package food
 
+//all the structs needed to take in and manipulate date from the spoonacular api and the database
+type Product struct {
+	Food Food `json:"product"`
+}
+
+//custom structure for db table
+//handles unmarshalling of json from OpenFoodData API
 type Food struct {
-	FoodID       int
-	PantryID     int
-	Title        string
-	Calories     int
-	Fat          int
-	Carbohydrate int
-	Protein      int
-	ServingSize  int
-	Misc         []string
-}
-
-type SpoonacularFood struct {
-	Id               int          `json:"id"`
-	Title            string       `json:"title"`
-	Badges           []string     `json:"badges"`
-	ImportantBadges  []string     `json:"importantBadges"`
-	Breadcrumbs      []string     `json:"breadcrumbs"`
-	GeneratedText    string       `json:"generatedText"`
-	ImageType        string       `json:"imageType"`
-	IngredientCount  int          `json:"ingredientCount"`
-	IngredientList   string       `json:"ingredientList"`
-	Ingredients      []Ingredient `json:"ingredients"`
-	Likes            int          `json:"likes"`
-	Nutrition        Nutrition    `json:"nutrition"`
-	Price            float32      `json:"price"`
-	Servings         Serving      `json:"servings`
-	SpoonacularScore float32      `json:"spoonacularScore"`
-}
-
-type Ingredient struct {
-	Description  string `json:"description"`
-	Name         string `json:"name"`
-	Safety_level string `json:"safety_level"`
-}
-
-type Nutrition struct {
-	Nutrients        []Nutrient       `json:"nutrients`
-	CaloricBreakdown CaloricBreakdown `json:"caloricBreakdown`
-}
-
-type Nutrient struct {
-	Name                string  `json:"name"`
-	Amount              int     `json:"amount"`
-	Unit                string  `json:"unit"`
-	PercentOfDailyNeeds float32 `json:"percentOfDailyNeeds"`
-}
-
-type CaloricBreakdown struct {
-	PercentProtein float32 `json:"percentProtein`
-	PercentFat     float32 `json:"percentFat"`
-	PercentCarbs   float32 `json:"percentCarbs"`
-}
-type Serving struct {
-	Number int    `json:"number"`
-	Size   int    `json:"size"`
-	Unit   string `json:"unit"`
+	FoodID    int
+	PantryID  int
+	Title     string `json:"product_name"`
+	Nutriment struct {
+		Calories     int `json:"energy-kcal_serving`
+		Fat          int `json:"fat_serving"`
+		Carbohydrate int `json:"carbohydrates_serving"`
+		Protein      int `json:"proteins_serving"`
+	} `json:"nutriments"`
+	ServingSize string   `json:"serving_size"`
+	Misc        []string `json:"allergens_tags"`
 }

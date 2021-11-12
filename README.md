@@ -8,8 +8,6 @@
 
 ## Overview <a name="Overview"></a>
 
----
-
 ## Licenses, References and Appropriated Code <a name="Licenses"></a>
 
 [Gin - Golang Package used for routing](https://github.com/gin-gonic/gin/blob/master/LICENSE)
