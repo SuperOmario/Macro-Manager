@@ -16,6 +16,7 @@ import (
 var router *gin.Engine
 
 func main() {
+	godotenv.Load()
 	port := os.Getenv("PORT")
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -29,8 +30,6 @@ func main() {
 	} else {
 		fmt.Println("connection is good")
 	}
-
-	godotenv.Load()
 
 	router = gin.Default()
 
