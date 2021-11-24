@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"MacroManager/models"
@@ -17,17 +17,12 @@ func GetUserByEmail(email string, db *sql.DB) models.User {
 	var user models.User
 
 	for rows.Next() {
-		var (
-			user_id int
-			fname   string
-			lname   string
-			email   string
-		)
-		if err := rows.Scan(&user_id, &fname, &lname, &email); err != nil {
+		var user models.User
+		if err := rows.Scan(&user.UserID, &user.FName, &user.LName, &email); err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("id %d: name is %s %s, email is %s \n", user_id, fname, lname, email)
-		user = models.NewUser(user_id, fname, lname, email)
+		log.Printf("id %d: name is %s %s, email is %s \n", user.UserID, user.FName, user.LName, email)
+		user = models.NewUser(user.UserID, user.FName, user.LName, email)
 	}
 	return user
 }
