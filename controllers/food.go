@@ -7,11 +7,13 @@ import (
 	"log"
 	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/lib/pq"
 )
 
 //checks if food is already in the current users pantry and if not inserts it into the database
 func SaveFood(food models.Food, upc string) {
+	godotenv.Load()
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal(err)
