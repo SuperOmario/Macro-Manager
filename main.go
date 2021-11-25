@@ -1,11 +1,10 @@
 package main
 
 import (
+	"MacroManager/controllers"
 	"fmt"
 	"log"
 	"os"
-
-	"MacroManager/controllers"
 
 	"database/sql"
 	//third party packages
