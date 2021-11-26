@@ -1,11 +1,14 @@
 package handlers
 
 import (
-	food "MacroManager/models"
+	"MacroManager/controllers"
+	"MacroManager/models"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 
 	//third party packages
 	"github.com/gin-gonic/gin"
@@ -13,7 +16,7 @@ import (
 
 //takes in a barcode and sends a http request to the OpenFoodData API https://world.openfoodfacts.org/data
 //adapted from https://blog.logrocket.com/making-http-requests-in-go/
-func ScanFood(upc string) food.Food {
+func ScanFood(upc string) (models.Food, error) {
 
 	resp, err := http.Get("https://world.openfoodfacts.org/api/v0/product/" + upc)
 	if err != nil {
@@ -24,15 +27,35 @@ func ScanFood(upc string) food.Food {
 		log.Fatalln(err)
 	}
 
+	//maps returned json to food model
 	sb := string(body)
-	var foodProduct food.Product
+	var foodProduct models.Product
 	json.Unmarshal([]byte(sb), &foodProduct)
-	return foodProduct.Food
+
+	//error handling for barcodes which are not in the openfoodfacts API
+	if foodProduct.Err == "product not found" {
+		return foodProduct.Food, errors.New(foodProduct.Err)
+	}
+
+	//converts barcode from string to an integer to give food its unique ID
+	foodId, err := strconv.ParseInt(upc, 0, 64)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		foodProduct.Food.FoodID = int(foodId)
+	}
+
+	foodProduct.Food.PantryID = 1
+	return foodProduct.Food, nil
 }
 
 func GetFoodProduct(c *gin.Context) {
 	upc := c.Param("upc")
-	foodProduct := ScanFood(upc)
-
-	c.IndentedJSON(http.StatusOK, foodProduct)
+	food, err := ScanFood(upc)
+	if err != nil {
+		c.IndentedJSON(http.StatusNotFound, err)
+	} else {
+		c.IndentedJSON(http.StatusOK, food)
+		controllers.SaveFood(food, upc)
+	}
 }

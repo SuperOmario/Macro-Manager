@@ -1,9 +1,9 @@
 package main
 
 import (
-	food "MacroManager/handlers"
+	"MacroManager/handlers"
 )
 
 func initialiseRoutes() {
-	router.GET("/food/:upc", food.GetFoodProduct)
+	router.GET("/food/:upc", handlers.GetFoodProduct)
 }

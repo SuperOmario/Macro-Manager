@@ -1,6 +1,7 @@
 package main
 
 import (
+	"MacroManager/controllers"
 	"fmt"
 	"log"
 	"os"
@@ -16,6 +17,7 @@ import (
 var router *gin.Engine
 
 func main() {
+	//loads environment variables sets up port and db connection
 	godotenv.Load()
 	port := os.Getenv("PORT")
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
@@ -23,13 +25,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = db.Ping()
-
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println("connection is good")
+	//verifies db connection
+	status := "up"
+	if err := db.Ping(); err != nil {
+		status = "down"
 	}
+	log.Println(status)
+
+	user := controllers.GetUserByEmail("fake_email@gmail.com", db)
+
+	fmt.Println(user)
 
 	router = gin.Default()
 
