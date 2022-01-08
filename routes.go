@@ -5,5 +5,9 @@ import (
 )
 
 func initialiseRoutes() {
+
+	//food routes
+	router.GET("/food", handlers.GetAllFoodProducts)
 	router.GET("/food/:upc", handlers.GetFoodProduct)
+
 }
