@@ -5,6 +5,7 @@ import (
 	"MacroManager/models"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//takes in a barcode and sends a http request to the OpenFoodData API https://world.openfoodfacts.org/data
+//takes in a barcode and sends a http request to the OpenFoodFacts API https://world.openfoodfacts.org/data
 //adapted from https://blog.logrocket.com/making-http-requests-in-go/
 func ScanFood(upc string) (models.Food, error) {
 
@@ -42,7 +43,7 @@ func ScanFood(upc string) (models.Food, error) {
 	if err != nil {
 		log.Fatal(err)
 	} else {
-		foodProduct.Food.FoodID = int(foodId)
+		foodProduct.Food.Barcode = int(foodId)
 	}
 
 	foodProduct.Food.PantryID = 1
@@ -58,4 +59,10 @@ func GetFoodProduct(c *gin.Context) {
 		c.IndentedJSON(http.StatusOK, food)
 		controllers.SaveFood(food, upc)
 	}
+}
+
+func GetAllFoodProducts(c *gin.Context) {
+	foods := controllers.GetAllFood()
+	fmt.Println(foods)
+	c.IndentedJSON(http.StatusOK, foods)
 }
