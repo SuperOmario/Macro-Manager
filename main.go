@@ -1,7 +1,7 @@
 package main
 
 import (
-	"MacroManager/controllers"
+	"MacroManager/handlers"
 	"fmt"
 	"log"
 	"os"
@@ -32,7 +32,7 @@ func main() {
 	}
 	log.Println(status)
 
-	user := controllers.GetUserByEmail("fake_email@gmail.com", db)
+	user := handlers.LoginUser("fake_email@gmail.com")
 
 	fmt.Println(user)
 

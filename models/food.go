@@ -19,5 +19,6 @@ type Food struct {
 		Carbohydrate float32 `json:"carbohydrates_100g"`
 		Protein      float32 `json:"proteins_100g"`
 	} `json:"nutriments"`
-	Misc []string `json:"allergens_tags"`
+	Serving_Size float32  `json:"serving_quantity,string"`
+	Misc         []string `json:"allergens_tags"`
 }

@@ -57,12 +57,18 @@ func GetFoodProduct(c *gin.Context) {
 		c.IndentedJSON(http.StatusNotFound, err)
 	} else {
 		c.IndentedJSON(http.StatusOK, food)
-		controllers.SaveFood(food, upc)
+		controllers.InsertFood(food, upc)
 	}
 }
 
 func GetAllFoodProducts(c *gin.Context) {
 	foods := controllers.GetAllFood()
+	fmt.Println(foods)
+	c.IndentedJSON(http.StatusOK, foods)
+}
+
+func GetPantry(c *gin.Context) {
+	foods := controllers.GetPantry()
 	fmt.Println(foods)
 	c.IndentedJSON(http.StatusOK, foods)
 }

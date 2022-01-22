@@ -4,10 +4,19 @@ import (
 	"MacroManager/models"
 	"database/sql"
 	"log"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 //retrieves a user by email from the db
-func GetUserByEmail(email string, db *sql.DB) models.User {
+func GetUserByEmail(email string) models.User {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	rows, err := db.Query("SELECT * FROM app_user WHERE email= $1", email)
 	if err != nil {
 		log.Fatal(err)
