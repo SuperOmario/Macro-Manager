@@ -1,9 +1,9 @@
 package models
 
 type Recipe struct {
-	UserID       int
-	PantryID     int
-	RecipeID     int
+	UserID       int64
+	PantryID     int64
+	RecipeID     int64
 	Title        string
 	Calories     float32
 	Fat          float32
@@ -11,4 +11,9 @@ type Recipe struct {
 	Protein      float32
 	ServingSize  float32
 	Misc         []string
+}
+
+type RecipeRequest struct {
+	Title       string
+	Ingredients []Ingredient
 }

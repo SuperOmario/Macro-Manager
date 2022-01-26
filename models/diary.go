@@ -1,6 +1,6 @@
 package models
 
 type Diary struct {
-	UserID  int
-	DiaryID int
+	UserID  int64
+	DiaryID int64
 }

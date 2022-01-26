@@ -4,7 +4,6 @@ import (
 	"MacroManager/models"
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// I used https://www.sohamkamani.com/golang/sql-transactions/ to learn the transaction syntax
 func InsertDiaryEntryFood(foodId int64, servings float32, servingSize ...float32) {
 	godotenv.Load()
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
@@ -20,7 +20,6 @@ func InsertDiaryEntryFood(foodId int64, servings float32, servingSize ...float32
 	}
 
 	date := time.Now().Format("2006-01-02")
-	fmt.Println(date)
 
 	ctx := context.Background()
 	tx, err := db.BeginTx(ctx, nil)
@@ -31,15 +30,10 @@ func InsertDiaryEntryFood(foodId int64, servings float32, servingSize ...float32
 	var diaryEntryPlaceHolder models.DiaryEntry
 	err = row.Scan(&diaryEntryPlaceHolder.DiaryEntryID, &diaryEntryPlaceHolder.DiaryID, &diaryEntryPlaceHolder.Date)
 	var diaryEntryId = diaryEntryPlaceHolder.DiaryEntryID
-	fmt.Printf("DiaryEntryID from query = %d", diaryEntryId)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("no diary entry found")
 		//must change diary id to be dynamic when implementing users *TO DO*
 		_, err = tx.ExecContext(ctx, "INSERT INTO diary_entry (diary_id, date) VALUES (1, $1)", date)
 		if err != nil {
-			fmt.Println("Rolling back 1")
-			fmt.Println(err)
 			tx.Rollback()
 			return
 		} else {
@@ -47,10 +41,7 @@ func InsertDiaryEntryFood(foodId int64, servings float32, servingSize ...float32
 			var diaryEntryPlaceHolder models.DiaryEntry
 			err = row.Scan(&diaryEntryPlaceHolder.DiaryEntryID, &diaryEntryPlaceHolder.DiaryID, &diaryEntryPlaceHolder.Date)
 			diaryEntryId = diaryEntryPlaceHolder.DiaryEntryID
-			fmt.Printf("DiaryEntryID from insert = %d", diaryEntryId)
 			if err != nil {
-				fmt.Println("Rolling back 2")
-				fmt.Println(err)
 				tx.Rollback()
 				return
 			}
@@ -61,15 +52,19 @@ func InsertDiaryEntryFood(foodId int64, servings float32, servingSize ...float32
 	var foodPlaceHolder models.Food
 	err = row.Scan(&foodPlaceHolder.Nutriments.Calories, &foodPlaceHolder.Nutriments.Fat, &foodPlaceHolder.Nutriments.Carbohydrate, &foodPlaceHolder.Nutriments.Protein, &foodPlaceHolder.Serving_Size)
 	if err != nil {
-		fmt.Println("Rolling back 3")
-		fmt.Println(err)
 		tx.Rollback()
 		return
 	} else {
 		if foodPlaceHolder.Serving_Size == 0 {
-			foodPlaceHolder, diaryEntryPlaceHolder = calculateNutriments(foodPlaceHolder, diaryEntryPlaceHolder, servings, servingSize[0])
+			if servingSize != nil {
+				foodPlaceHolder, diaryEntryPlaceHolder = calculateNutrimentsFoodEntry(foodPlaceHolder, diaryEntryPlaceHolder, servings, servingSize[0])
+			} else {
+				//default serving size will go to 100g
+				foodPlaceHolder, diaryEntryPlaceHolder = calculateNutrimentsFoodEntry(foodPlaceHolder, diaryEntryPlaceHolder, servings, 100)
+			}
+
 		} else {
-			foodPlaceHolder, diaryEntryPlaceHolder = calculateNutriments(foodPlaceHolder, diaryEntryPlaceHolder, servings, foodPlaceHolder.Serving_Size)
+			foodPlaceHolder, diaryEntryPlaceHolder = calculateNutrimentsFoodEntry(foodPlaceHolder, diaryEntryPlaceHolder, servings, foodPlaceHolder.Serving_Size)
 		}
 	}
 
@@ -77,34 +72,28 @@ func InsertDiaryEntryFood(foodId int64, servings float32, servingSize ...float32
 		diaryEntryId, foodId, servings, foodPlaceHolder.Nutriments.Calories, foodPlaceHolder.Nutriments.Fat, foodPlaceHolder.Nutriments.Carbohydrate,
 		foodPlaceHolder.Nutriments.Protein)
 	if err != nil {
-		fmt.Println("Rolling back 4")
-		fmt.Println(err)
 		tx.Rollback()
 		return
 	}
 
 	_, err = tx.ExecContext(ctx, "UPDATE diary_entry SET calories=$1, fat=$2, carbohydrate=$3, protein=$4 WHERE diary_entry_id=$5", diaryEntryPlaceHolder.Calories, diaryEntryPlaceHolder.Fat, diaryEntryPlaceHolder.Carbohydrate, diaryEntryPlaceHolder.Protein, diaryEntryId)
 	if err != nil {
-		fmt.Println("Rolling back 5")
-		fmt.Println(err)
 		tx.Rollback()
 		return
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		fmt.Print("Commit failed")
-		fmt.Println(err)
 		log.Fatal(err)
 	}
 }
 
-func calculateNutriments(foodPlaceHolder models.Food, diaryEntryPlaceHolder models.DiaryEntry, servings float32, servingSize float32) (models.Food, models.DiaryEntry) {
+//Helper function to modify the nutriment values based on how much of a food the user wants to enter into the diary
+func calculateNutrimentsFoodEntry(foodPlaceHolder models.Food, diaryEntryPlaceHolder models.DiaryEntry, servings float32, servingSize float32) (models.Food, models.DiaryEntry) {
 	foodPlaceHolder.Nutriments.Calories = (foodPlaceHolder.Nutriments.Calories * (servingSize / 100)) * servings
 	foodPlaceHolder.Nutriments.Fat = (foodPlaceHolder.Nutriments.Fat * (servingSize / 100)) * servings
 	foodPlaceHolder.Nutriments.Carbohydrate = (foodPlaceHolder.Nutriments.Carbohydrate * (servingSize / 100)) * servings
 	foodPlaceHolder.Nutriments.Protein = (foodPlaceHolder.Nutriments.Protein * (servingSize / 100)) * servings
-	fmt.Println(foodPlaceHolder.Nutriments.Calories, foodPlaceHolder.Nutriments.Fat, foodPlaceHolder.Nutriments.Carbohydrate, foodPlaceHolder.Nutriments.Protein)
 	diaryEntryPlaceHolder.Calories += foodPlaceHolder.Nutriments.Calories
 	diaryEntryPlaceHolder.Fat += foodPlaceHolder.Nutriments.Fat
 	diaryEntryPlaceHolder.Carbohydrate += foodPlaceHolder.Nutriments.Carbohydrate

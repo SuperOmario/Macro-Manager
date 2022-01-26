@@ -43,7 +43,7 @@ func ScanFood(upc string) (models.Food, error) {
 	if err != nil {
 		log.Fatal(err)
 	} else {
-		foodProduct.Food.Barcode = int(foodId)
+		foodProduct.Food.Barcode = int64(foodId)
 	}
 
 	foodProduct.Food.PantryID = 1

@@ -1,6 +1,6 @@
 package models
 
 type Pantry struct {
-	UserID   int
-	PantryID int
+	UserID   int64
+	PantryID int64
 }

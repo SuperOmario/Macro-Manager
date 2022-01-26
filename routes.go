@@ -23,4 +23,7 @@ func initialiseRoutes() {
 	//GET
 	router.GET("/pantry", handlers.GetPantry)
 
+	//recipe routes
+	router.POST("/recipe", handlers.CreateRecipe)
+
 }

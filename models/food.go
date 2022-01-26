@@ -9,9 +9,9 @@ type Product struct {
 //custom structure for db table
 //handles unmarshalling of json from OpenFoodData API
 type Food struct {
-	PantryID   int
-	FoodID     int
-	Barcode    int
+	PantryID   int64
+	FoodID     int64
+	Barcode    int64
 	Title      string `json:"product_name"`
 	Nutriments struct {
 		Calories     float32 `json:"energy-kcal_100g"`
