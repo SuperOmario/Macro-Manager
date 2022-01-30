@@ -19,17 +19,17 @@ func InsertFood(food models.Food, upc string) {
 		log.Fatal(err)
 	}
 
-	// must change pantry id to be dynamic when implementing that feature *TO DO*
-	row := db.QueryRow("SELECT * FROM food WHERE barcode=$1 and pantry_id=1", upc)
+	// must change user id to be dynamic when implementing that feature *TO DO*
+	row := db.QueryRow("SELECT * FROM ingredient WHERE barcode=$1 and user_id=1", upc)
 	if err != nil {
 		log.Fatal(err)
 	} else {
 		var foodPlaceHolder models.Food
-		err := row.Scan(&foodPlaceHolder.PantryID, &foodPlaceHolder.FoodID, &foodPlaceHolder.Barcode, &foodPlaceHolder.Title, &foodPlaceHolder.Nutriments.Calories,
+		err := row.Scan(&foodPlaceHolder.UserID, &foodPlaceHolder.IngredientID, &foodPlaceHolder.Barcode, &foodPlaceHolder.Title, &foodPlaceHolder.Nutriments.Calories,
 			&foodPlaceHolder.Nutriments.Fat, &foodPlaceHolder.Nutriments.Carbohydrate, &foodPlaceHolder.Nutriments.Protein, &foodPlaceHolder.Serving_Size, pq.Array(&foodPlaceHolder.Misc))
 		if err != nil {
-			rows, err := db.Query("INSERT INTO food(pantry_id, barcode, title, calories, fat, carbohydrate, protein, serving_size, misc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-				food.PantryID, upc, food.Title, food.Nutriments.Calories, food.Nutriments.Fat, food.Nutriments.Carbohydrate, food.Nutriments.Protein, food.Serving_Size, pq.Array(food.Misc))
+			rows, err := db.Query("INSERT INTO ingredient(user_id, barcode, title, calories, fat, carbohydrate, protein, serving_size, misc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+				food.UserID, upc, food.Title, food.Nutriments.Calories, food.Nutriments.Fat, food.Nutriments.Carbohydrate, food.Nutriments.Protein, food.Serving_Size, pq.Array(food.Misc))
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -47,7 +47,7 @@ func GetAllFood() []models.Food {
 		log.Fatal(err)
 	}
 	// must change pantry id to be dynamic when implementing that feature *TO DO*
-	rows, err := db.Query("SELECT * FROM food")
+	rows, err := db.Query("SELECT * FROM ingredient")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,7 +55,7 @@ func GetAllFood() []models.Food {
 	var foods []models.Food
 	for rows.Next() {
 		var foodPlaceHolder models.Food
-		err := rows.Scan(&foodPlaceHolder.PantryID, &foodPlaceHolder.FoodID, &foodPlaceHolder.Barcode, &foodPlaceHolder.Title, &foodPlaceHolder.Nutriments.Calories,
+		err := rows.Scan(&foodPlaceHolder.IngredientID, &foodPlaceHolder.Barcode, &foodPlaceHolder.Title, &foodPlaceHolder.Nutriments.Calories,
 			&foodPlaceHolder.Nutriments.Fat, &foodPlaceHolder.Nutriments.Carbohydrate, &foodPlaceHolder.Nutriments.Protein, &foodPlaceHolder.Serving_Size, pq.Array(&foodPlaceHolder.Misc))
 		if err != nil {
 			log.Fatal(err)
@@ -71,8 +71,8 @@ func GetPantry() []models.Food {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// must change pantry id to be dynamic when implementing that feature *TO DO*
-	rows, err := db.Query("SELECT * FROM food WHERE pantry_id=1")
+	// must change user id to be dynamic when implementing that feature *TO DO*
+	rows, err := db.Query("SELECT * FROM ingredient WHERE user_id=1")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -80,8 +80,9 @@ func GetPantry() []models.Food {
 	var foods []models.Food
 	for rows.Next() {
 		var foodPlaceHolder models.Food
-		err := rows.Scan(&foodPlaceHolder.PantryID, &foodPlaceHolder.FoodID, &foodPlaceHolder.Barcode, &foodPlaceHolder.Title, &foodPlaceHolder.Nutriments.Calories,
-			&foodPlaceHolder.Nutriments.Fat, &foodPlaceHolder.Nutriments.Carbohydrate, &foodPlaceHolder.Nutriments.Protein, &foodPlaceHolder.Serving_Size, pq.Array(&foodPlaceHolder.Misc))
+		err := rows.Scan(&foodPlaceHolder.UserID, &foodPlaceHolder.IngredientID, &foodPlaceHolder.Barcode, &foodPlaceHolder.Title, &foodPlaceHolder.Nutriments.Calories,
+			&foodPlaceHolder.Nutriments.Fat, &foodPlaceHolder.Nutriments.Carbohydrate, &foodPlaceHolder.Nutriments.Protein, &foodPlaceHolder.Serving_Size,
+			pq.Array(&foodPlaceHolder.Misc))
 		if err != nil {
 			log.Fatal(err)
 		}

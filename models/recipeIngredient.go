@@ -7,6 +7,10 @@ type RecipeIngredient struct {
 }
 
 type Ingredient struct {
-	FoodID   int64
-	Servings float32
+	IngredientID int64
+	Servings     float32
+}
+
+type RemoveIngredient struct {
+	IngredientID int64
 }

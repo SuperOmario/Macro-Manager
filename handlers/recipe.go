@@ -3,28 +3,108 @@ package handlers
 import (
 	"MacroManager/controllers"
 	"MacroManager/models"
-	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
+//create a new recipe with one or more ingredients
 func CreateRecipe(c *gin.Context) {
-	fmt.Println("Request received")
 	var recipeRequest models.RecipeRequest
-	fmt.Println("variable initialised")
 	err := c.BindJSON(&recipeRequest)
-	fmt.Println("bind called")
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, err)
 	} else {
-		recipe, err := controllers.InsertRecipe(recipeRequest.Title, recipeRequest.Ingredients...)
+		recipe, err := controllers.InsertRecipe(recipeRequest.Title, recipeRequest.ServingSize, recipeRequest.Ingredients...)
 		if err != nil {
 			log.Fatal(err)
 			c.IndentedJSON(http.StatusInternalServerError, err)
 		} else {
 			c.IndentedJSON(http.StatusOK, recipe)
+		}
+	}
+}
+
+//add a single ingredient to a recipe
+func AddRecipeIngredient(c *gin.Context) {
+	var ingredient models.Ingredient
+	recipeId, err := strconv.ParseInt(c.Param("id"), 36, 64)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		err = c.BindJSON(&ingredient)
+		if err != nil {
+			c.IndentedJSON(http.StatusBadRequest, err)
+		} else {
+			recipe, err := controllers.AddRecipeIngredient(recipeId, ingredient)
+			if err != nil {
+				c.IndentedJSON(http.StatusBadRequest, err)
+			} else {
+				c.IndentedJSON(http.StatusOK, recipe)
+			}
+		}
+	}
+}
+
+func UpdateRecipe(c *gin.Context) {
+	recipeId, err := strconv.ParseInt(c.Param("id"), 36, 64)
+	var recipeRequest models.RecipeUpdate
+	var recipe models.Recipe
+
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		err = c.BindJSON(&recipeRequest)
+		if err != nil || recipeRequest.ServingSize == 0 {
+			c.IndentedJSON(http.StatusBadRequest, err)
+		} else {
+			err := controllers.UpdateRecipe(recipeId, recipeRequest.Title, recipeRequest.ServingSize)
+			if err != nil {
+				c.IndentedJSON(http.StatusInternalServerError, err)
+			} else {
+				recipe.RecipeID = recipeId
+				recipe.ServingSize = recipeRequest.ServingSize
+				recipe.Title = recipeRequest.Title
+				c.IndentedJSON(http.StatusOK, recipe)
+			}
+		}
+	}
+}
+
+func RemoveIngredient(c *gin.Context) {
+	recipeId, err := strconv.ParseInt(c.Param("id"), 36, 64)
+	var ingredient models.RemoveIngredient
+
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		err = c.BindJSON(&ingredient)
+		if err != nil {
+			log.Fatal(err)
+			c.IndentedJSON(http.StatusBadRequest, err)
+		} else {
+			err := controllers.RemoveIngredient(recipeId, ingredient.IngredientID)
+			if err != nil {
+				c.IndentedJSON(http.StatusInternalServerError, err)
+			} else {
+				c.IndentedJSON(http.StatusOK, recipeId)
+			}
+		}
+	}
+}
+
+func DeleteRecipe(c *gin.Context) {
+	recipeId, err := strconv.ParseInt(c.Param("id"), 36, 64)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		err = controllers.DeleteRecipe(recipeId)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, recipeId)
 		}
 	}
 }

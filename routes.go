@@ -6,24 +6,34 @@ import (
 
 func initialiseRoutes() {
 
-	//food routes
+	//admin routes
 	//GET
-	router.GET("/food", handlers.GetAllFoodProducts)
+	router.GET("/admin/food", handlers.GetAllFoodProducts)
 
+	//food
+	//GET
+	router.GET("/food", handlers.GetUserFoodProducts)
 	//POST
 	router.POST("/food/:upc", handlers.GetFoodProduct)
+
+	//recipe routes
+	//GET
+	//router.GET("/recipe")
+	//POST
+	router.POST("/recipe", handlers.CreateRecipe)
+
+	//PATCH
+	router.PATCH("/recipe/food/:id", handlers.AddRecipeIngredient)
+	router.PATCH("/recipe/details/:id", handlers.UpdateRecipe)
+
+	//DELETE
+	router.DELETE("/recipe/ingredient/:id", handlers.RemoveIngredient)
+	router.DELETE("/recipe/:id", handlers.DeleteRecipe)
 
 	//diary routes
 	//GET
 
 	//POST
-	router.POST("/diary/foodEntry", handlers.EnterFood)
-
-	//pantry routes
-	//GET
-	router.GET("/pantry", handlers.GetPantry)
-
-	//recipe routes
-	router.POST("/recipe", handlers.CreateRecipe)
+	// router.POST("/diary/foodEntry", handlers.EnterFood)
 
 }

@@ -4,15 +4,15 @@ import (
 	"MacroManager/models"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/lib/pq"
 )
 
-func InsertRecipe(title string, ingredients ...models.Ingredient) (recipe models.Recipe, err error) {
+func InsertRecipe(title string, serving_size float32, ingredients ...models.Ingredient) (recipe models.Recipe, err error) {
 	godotenv.Load()
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -26,40 +26,22 @@ func InsertRecipe(title string, ingredients ...models.Ingredient) (recipe models
 	}
 
 	var recipeId int64
-	//Must make pantry id and user id dynamic when users are implemented *TO DO*
-	err = tx.QueryRowContext(ctx, "INSERT INTO recipe (user_id, pantry_id, title) VALUES (1,1, $1) RETURNING recipe_id", title).Scan(&recipeId)
+	//Must make user id dynamic when users are implemented *TO DO*
+	err = tx.QueryRowContext(ctx, "INSERT INTO recipe (user_id, title, serving_size) VALUES (1, $1, $2) RETURNING recipe_id", title, serving_size).Scan(&recipeId)
 	if err != nil {
 		fmt.Println(err)
 		tx.Rollback()
 		return
 	}
-
-	var foodPlaceHolder models.Food
-	var foods []models.Food
 	var recipePlaceHolder models.Recipe
 	recipePlaceHolder.RecipeID = recipeId
-	//Must make pantry id dynamic when users are implemented *TO DO*
-	recipePlaceHolder.PantryID = 1
+	//Must make user id dynamic when users are implemented *TO DO*
+	recipePlaceHolder.UserID = 1
 	recipePlaceHolder.Title = title
+	recipePlaceHolder.ServingSize = serving_size
 
 	for _, ingredient := range ingredients {
-		foodPlaceHolder = createIngredient(ingredient, recipeId, tx, ctx)
-		if foodPlaceHolder.Nutriments.Calories != 0 {
-			foods = append(foods, foodPlaceHolder)
-		} else {
-			return
-		}
-	}
-
-	for _, food := range foods {
-		recipePlaceHolder = calculateNutrimentsRecipe(food, recipePlaceHolder)
-	}
-
-	_, err = tx.ExecContext(ctx, "UPDATE recipe SET calories=$1, fat=$2, carbohydrate=$3, protein=$4, misc=$5 WHERE recipe_id=$6", recipePlaceHolder.Calories,
-		recipePlaceHolder.Fat, recipePlaceHolder.Carbohydrate, recipePlaceHolder.Protein, pq.Array(recipePlaceHolder.Misc), recipeId)
-	if err != nil {
-		tx.Rollback()
-		return
+		createIngredient(ingredient, recipeId, tx, ctx)
 	}
 
 	err = tx.Commit()
@@ -71,51 +53,127 @@ func InsertRecipe(title string, ingredients ...models.Ingredient) (recipe models
 	return
 }
 
-func createIngredient(ingredient models.Ingredient, recipeId int64, tx *sql.Tx, ctx context.Context, servingSize ...float32) models.Food {
-	var emptyFood models.Food
-	_, err := tx.ExecContext(ctx, "INSERT INTO recipe_ingredient (food_id, recipe_id, servings) VALUES ($1, $2, $3)", ingredient.FoodID, recipeId, ingredient.Servings)
+func AddRecipeIngredient(recipeId int64, ingredient models.Ingredient) (recipe models.Recipe, err error) {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var count int
+
+	err = tx.QueryRowContext(ctx, "SELECT COUNT(ingredient_id) FROM recipe_ingredient WHERE recipe_id=$1 AND ingredient_id=$2", recipeId, ingredient.IngredientID).Scan(&count)
+	if err != nil {
+		tx.Rollback()
+		return
+	} else if count == 1 {
+		tx.Rollback()
+		err = errors.New("this ingredient is already part of this recipe")
+		return
+	}
+
+	_, err = tx.Exec("INSERT INTO recipe_ingredient (ingredient_id, recipe_id, servings) VALUES ($1, $2, $3)", ingredient.IngredientID, recipeId, ingredient.Servings)
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+
+	err = tx.QueryRowContext(ctx, "SELECT * FROM recipe WHERE recipe_id=$1", recipeId).Scan(&recipe.UserID, &recipe.RecipeID, &recipe.Title, &recipe.ServingSize)
+	if err != nil {
+		return
+	}
+	err = tx.Commit()
+	if err != nil {
+		return
+	}
+	return
+}
+
+func UpdateRecipe(recipeId int64, title string, servingSize float32) error {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(title, servingSize, recipeId)
+
+	_, err = db.Exec("UPDATE recipe SET title=$1, serving_size=$2 WHERE recipe_id=$3", title, servingSize, recipeId)
+	return err
+}
+
+func RemoveIngredient(recipeId int64, ingredientId int64) error {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec("DELETE FROM recipe_ingredient WHERE recipe_id=$1 AND ingredient_id=$2", recipeId, ingredientId)
+	return err
+}
+
+func DeleteRecipe(recipeId int64) error {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec("DELETE FROM recipe WHERE recipe_id=$1", recipeId)
+	return err
+}
+
+//creates a recipe ingredient entry in the database
+func createIngredient(ingredient models.Ingredient, recipeId int64, tx *sql.Tx, ctx context.Context, servingSize ...float32) {
+	fmt.Println(ingredient.IngredientID)
+	_, err := tx.ExecContext(ctx, "INSERT INTO recipe_ingredient (ingredient_id, recipe_id, servings) VALUES ($1, $2, $3)", ingredient.IngredientID, recipeId, ingredient.Servings)
 	if err != nil {
 		fmt.Println(err)
 		tx.Rollback()
-	} else {
-		err = tx.QueryRowContext(ctx, "SELECT calories, fat, carbohydrate, protein, serving_size, misc FROM food WHERE food_id=$1",
-			ingredient.FoodID).Scan(&emptyFood.Nutriments.Calories, &emptyFood.Nutriments.Fat,
-			&emptyFood.Nutriments.Carbohydrate, &emptyFood.Nutriments.Protein, &emptyFood.Serving_Size, pq.Array(&emptyFood.Misc))
-		if err != nil {
-			fmt.Println(err)
-			tx.Rollback()
-		} else {
-			fmt.Println(emptyFood.Misc)
-			if emptyFood.Serving_Size == 0 {
-				if servingSize != nil {
-					emptyFood = calculateNutrimentsRecipeIngredient(emptyFood, ingredient.Servings, servingSize[0])
-				} else {
-					//default serving size will go to 100g
-					emptyFood = calculateNutrimentsRecipeIngredient(emptyFood, ingredient.Servings, 100)
-				}
-			} else {
-				emptyFood = calculateNutrimentsRecipeIngredient(emptyFood, ingredient.Servings, emptyFood.Serving_Size)
-			}
-		}
 	}
-	return emptyFood
 }
 
-func calculateNutrimentsRecipeIngredient(foodPlaceHolder models.Food, servings float32, servingSize float32) models.Food {
-	foodPlaceHolder.Nutriments.Calories = (foodPlaceHolder.Nutriments.Calories * (servingSize / 100)) * servings
-	foodPlaceHolder.Nutriments.Fat = (foodPlaceHolder.Nutriments.Fat * (servingSize / 100)) * servings
-	foodPlaceHolder.Nutriments.Carbohydrate = (foodPlaceHolder.Nutriments.Carbohydrate * (servingSize / 100)) * servings
-	foodPlaceHolder.Nutriments.Protein = (foodPlaceHolder.Nutriments.Protein * (servingSize / 100)) * servings
+//calculates the nutriments of a recipe ingredient for entry into the recipe
+// func calculateNutrimentsRecipeIngredient(foodPlaceHolder models.Food, servings float32, servingSize float32) models.Food {
+// 	foodPlaceHolder.Nutriments.Calories = (foodPlaceHolder.Nutriments.Calories * (servingSize / 100)) * servings
+// 	foodPlaceHolder.Nutriments.Fat = (foodPlaceHolder.Nutriments.Fat * (servingSize / 100)) * servings
+// 	foodPlaceHolder.Nutriments.Carbohydrate = (foodPlaceHolder.Nutriments.Carbohydrate * (servingSize / 100)) * servings
+// 	foodPlaceHolder.Nutriments.Protein = (foodPlaceHolder.Nutriments.Protein * (servingSize / 100)) * servings
 
-	return foodPlaceHolder
-}
+// 	return foodPlaceHolder
+// }
 
-func calculateNutrimentsRecipe(foodPlaceHolder models.Food, recipePlaceHolder models.Recipe) models.Recipe {
-	recipePlaceHolder.Calories += foodPlaceHolder.Nutriments.Calories
-	recipePlaceHolder.Fat += foodPlaceHolder.Nutriments.Fat
-	recipePlaceHolder.Carbohydrate += foodPlaceHolder.Nutriments.Carbohydrate
-	recipePlaceHolder.Protein += foodPlaceHolder.Nutriments.Protein
-	recipePlaceHolder.Misc = append(recipePlaceHolder.Misc, foodPlaceHolder.Misc...)
+//calculates the nutriments of a recipe
+// func calculateNutrimentsRecipe(foodPlaceHolder models.Food, recipePlaceHolder models.Recipe) models.Recipe {
+// 	recipePlaceHolder.Calories += foodPlaceHolder.Nutriments.Calories
+// 	recipePlaceHolder.Fat += foodPlaceHolder.Nutriments.Fat
+// 	recipePlaceHolder.Carbohydrate += foodPlaceHolder.Nutriments.Carbohydrate
+// 	recipePlaceHolder.Protein += foodPlaceHolder.Nutriments.Protein
+// 	recipePlaceHolder.Misc = append(recipePlaceHolder.Misc, foodPlaceHolder.Misc...)
 
-	return recipePlaceHolder
-}
+// 	return recipePlaceHolder
+// }
+
+//in development
+
+// func calculateNutrimentsRecipeRemove(foodPlaceHolder models.Food, recipePlaceHolder models.Recipe) models.Recipe {
+// 	recipePlaceHolder.Calories -= foodPlaceHolder.Nutriments.Calories
+// 	recipePlaceHolder.Fat -= foodPlaceHolder.Nutriments.Fat
+// 	recipePlaceHolder.Carbohydrate -= foodPlaceHolder.Nutriments.Carbohydrate
+// 	recipePlaceHolder.Protein -= foodPlaceHolder.Nutriments.Protein
+// 	for i, misc := range recipePlaceHolder.Misc {
+// 		for _, misc2 := range foodPlaceHolder.Misc {
+// 			if misc == misc2 {
+// 				recipePlaceHolder.Misc[i] = recipePlaceHolder.Misc[len(recipePlaceHolder.Misc)-1]
+// 			}
+// 		}
+// 	}
+// 	return recipePlaceHolder
+// }

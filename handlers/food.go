@@ -46,7 +46,7 @@ func ScanFood(upc string) (models.Food, error) {
 		foodProduct.Food.Barcode = int64(foodId)
 	}
 
-	foodProduct.Food.PantryID = 1
+	foodProduct.Food.UserID = 1
 	return foodProduct.Food, nil
 }
 
@@ -67,7 +67,7 @@ func GetAllFoodProducts(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, foods)
 }
 
-func GetPantry(c *gin.Context) {
+func GetUserFoodProducts(c *gin.Context) {
 	foods := controllers.GetPantry()
 	fmt.Println(foods)
 	c.IndentedJSON(http.StatusOK, foods)
