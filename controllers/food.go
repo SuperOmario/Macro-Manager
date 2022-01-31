@@ -40,6 +40,17 @@ func InsertFood(food models.Food, upc string) {
 	}
 }
 
+func DeleteFood(foodId int64) error {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec("DELETE FROM ingredient WHERE ingredient_id=$1", foodId)
+	return err
+}
+
 func GetAllFood() []models.Food {
 	godotenv.Load()
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))

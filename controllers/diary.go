@@ -1,111 +1,148 @@
 package controllers
 
-// import (
-// 	"MacroManager/models"
-// 	"context"
-// 	"database/sql"
-// 	"log"
-// 	"os"
-// 	"time"
+import (
+	"MacroManager/models"
+	"context"
+	"database/sql"
+	"log"
+	"os"
+	"time"
 
-// 	"github.com/joho/godotenv"
-// )
+	"github.com/joho/godotenv"
+	"github.com/lib/pq"
+)
+
+func GetAllDiaryEntriesForUser() (diaryEntries models.DiaryEntries, err error) {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		return
+	}
+
+	rows, err := db.Query("SELECT * FROM diary_entry WHERE user_id=$1", 1)
+	if err != nil {
+		return
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			diaryEntries, err = createDiaryEntryArray(rows)
+			if err != nil {
+				return
+			}
+		}
+		return
+	}
+}
+
+func GetDiaryEntriesByDate(date string) (diaryEntries models.DiaryEntries, err error) {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		return
+	}
+
+	//must make user id dynamic *TO DO*
+	rows, err := db.Query("SELECT * FROM diary_entry WHERE date=$1 AND user_id=1", date)
+	if err != nil {
+		return
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			diaryEntries, err = createDiaryEntryArray(rows)
+			if err != nil {
+				return
+			}
+		}
+		return
+	}
+}
 
 // I used https://www.sohamkamani.com/golang/sql-transactions/ to learn the transaction syntax
-// func InsertDiaryEntryFood(foodId int64, servings float32, servingSize ...float32) {
-// 	godotenv.Load()
-// 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
+func InsertDiaryEntry(recipeId int64, servings float32, date string, meal string) (diaryEntryId int64) {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// 	date := time.Now().Format("2006-01-02")
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
 
-// 	ctx := context.Background()
-// 	tx, err := db.BeginTx(ctx, nil)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	row := tx.QueryRowContext(ctx, "SELECT diary_entry_id, date FROM diary_entry WHERE user_id=1 and date=$1", date)
-// 	var diaryEntryPlaceHolder models.DiaryEntry
-// 	err = row.Scan(&diaryEntryPlaceHolder.DiaryEntryID, &diaryEntryPlaceHolder.Date)
-// 	var diaryEntryId = diaryEntryPlaceHolder.DiaryEntryID
-// 	if err != nil {
-// 		//must change user id to be dynamic when implementing users *TO DO*
-// 		_, err = tx.ExecContext(ctx, "INSERT INTO diary_entry (user_id, date) VALUES (1, $1)", date)
-// 		if err != nil {
-// 			tx.Rollback()
-// 			return
-// 		} else {
-// 			row := tx.QueryRowContext(ctx, "SELECT diary_entry_id, date FROM diary_entry WHERE user_id=1 date=$1", date)
-// 			var diaryEntryPlaceHolder models.DiaryEntry
-// 			err = row.Scan(&diaryEntryPlaceHolder.DiaryEntryID, &diaryEntryPlaceHolder.Date)
-// 			diaryEntryId = diaryEntryPlaceHolder.DiaryEntryID
-// 			if err != nil {
-// 				tx.Rollback()
-// 				return
-// 			}
-// 		}
-// 	}
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// 	row = tx.QueryRowContext(ctx, "SELECT calories, fat, carbohydrate, protein, serving_size FROM food where food_id=$1", foodId)
-// 	var foodPlaceHolder models.Food
-// 	err = row.Scan(&foodPlaceHolder.Nutriments.Calories, &foodPlaceHolder.Nutriments.Fat, &foodPlaceHolder.Nutriments.Carbohydrate, &foodPlaceHolder.Nutriments.Protein,
-// 		&foodPlaceHolder.Serving_Size)
-// 	if err != nil {
-// 		tx.Rollback()
-// 		return
-// 	} else {
-// 		if foodPlaceHolder.Serving_Size == 0 {
-// 			if servingSize != nil {
-// 				foodPlaceHolder, diaryEntryPlaceHolder = calculateNutrimentsFoodEntry(foodPlaceHolder, diaryEntryPlaceHolder, servings, servingSize[0])
-// 			} else {
-// 				//default serving size will go to 100g
-// 				foodPlaceHolder, diaryEntryPlaceHolder = calculateNutrimentsFoodEntry(foodPlaceHolder, diaryEntryPlaceHolder, servings, 100)
-// 			}
+	rows, err := tx.QueryContext(ctx,
+		"SELECT calories, fat, carbohydrate, protein, serving_size, misc FROM ingredient LEFT JOIN recipe_ingredient ON ingredient.ingredient_id=recipe_ingredient.ingredient_id WHERE recipe_ingredient.recipe_id=$1",
+		recipeId)
+	if err != nil {
+		log.Fatal(err)
+		tx.Rollback()
+		return
+	}
+	defer rows.Close()
+	var diaryEntry models.DiaryEntry
+	for rows.Next() {
+		var food models.Food
+		err := rows.Scan(&food.Nutriments.Calories, &food.Nutriments.Fat, &food.Nutriments.Carbohydrate, &food.Nutriments.Protein, &food.Serving_Size, pq.Array(&food.Misc))
+		if err != nil {
+			log.Fatal(err)
+		}
+		diaryEntry = calculateNutrimentsDiaryEntry(food, diaryEntry, servings, food.Serving_Size)
+	}
 
-// 		} else {
-// 			foodPlaceHolder, diaryEntryPlaceHolder = calculateNutrimentsFoodEntry(foodPlaceHolder, diaryEntryPlaceHolder, servings, foodPlaceHolder.Serving_Size)
-// 		}
-// 	}
+	err = tx.QueryRowContext(ctx, "INSERT INTO diary_entry (user_id, recipe_id, date, meal, calories, fat, carbohydrate, protein, servings, misc) VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING diary_entry_id",
+		recipeId, date, meal, diaryEntry.Calories, diaryEntry.Fat, diaryEntry.Carbohydrate, diaryEntry.Protein, servings, pq.Array(diaryEntry.Misc)).Scan(&diaryEntryId)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// 	_, err = tx.ExecContext(ctx, "INSERT INTO diary_entry_food (diary_entry_id, food_id, servings, calories, fat, carbohydrate, protein) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-// 		diaryEntryId, foodId, servings, foodPlaceHolder.Nutriments.Calories, foodPlaceHolder.Nutriments.Fat, foodPlaceHolder.Nutriments.Carbohydrate,
-// 		foodPlaceHolder.Nutriments.Protein)
-// 	if err != nil {
-// 		tx.Rollback()
-// 		return
-// 	}
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		return
+	}
 
-// 	_, err = tx.ExecContext(ctx, "UPDATE diary_entry SET calories=$1, fat=$2, carbohydrate=$3, protein=$4 WHERE diary_entry_id=$5", diaryEntryPlaceHolder.Calories,
-// 		diaryEntryPlaceHolder.Fat, diaryEntryPlaceHolder.Carbohydrate, diaryEntryPlaceHolder.Protein, diaryEntryId)
-// 	if err != nil {
-// 		tx.Rollback()
-// 		return
-// 	}
+	return
+}
 
-// 	err = tx.Commit()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
+func DeleteDiaryEntry(diaryEntryID int64) {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// //Helper function to modify the nutriment values based on how much of a food the user wants to enter into the diary
-// func calculateNutrimentsFoodEntry(foodPlaceHolder models.Food, diaryEntryPlaceHolder models.DiaryEntry, servings float32, servingSize float32) (models.Food, models.DiaryEntry) {
-// 	foodPlaceHolder.Nutriments.Calories = (foodPlaceHolder.Nutriments.Calories * (servingSize / 100)) * servings
-// 	foodPlaceHolder.Nutriments.Fat = (foodPlaceHolder.Nutriments.Fat * (servingSize / 100)) * servings
-// 	foodPlaceHolder.Nutriments.Carbohydrate = (foodPlaceHolder.Nutriments.Carbohydrate * (servingSize / 100)) * servings
-// 	foodPlaceHolder.Nutriments.Protein = (foodPlaceHolder.Nutriments.Protein * (servingSize / 100)) * servings
-// 	diaryEntryPlaceHolder.Calories += foodPlaceHolder.Nutriments.Calories
-// 	diaryEntryPlaceHolder.Fat += foodPlaceHolder.Nutriments.Fat
-// 	diaryEntryPlaceHolder.Carbohydrate += foodPlaceHolder.Nutriments.Carbohydrate
-// 	diaryEntryPlaceHolder.Protein += foodPlaceHolder.Nutriments.Protein
+	_, err = db.Exec("DELETE FROM diary_entry WHERE diary_entry_id=$1", diaryEntryID)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
-// 	return foodPlaceHolder, diaryEntryPlaceHolder
-// }
+//Helper function to modify the nutriment values based on how much of a food the user wants to enter into the diary
+func calculateNutrimentsDiaryEntry(foodPlaceHolder models.Food, diaryEntryPlaceHolder models.DiaryEntry, servings float32, servingSize float32) models.DiaryEntry {
+	foodPlaceHolder.Nutriments.Calories = (foodPlaceHolder.Nutriments.Calories * (servingSize / 100)) * servings
+	foodPlaceHolder.Nutriments.Fat = (foodPlaceHolder.Nutriments.Fat * (servingSize / 100)) * servings
+	foodPlaceHolder.Nutriments.Carbohydrate = (foodPlaceHolder.Nutriments.Carbohydrate * (servingSize / 100)) * servings
+	foodPlaceHolder.Nutriments.Protein = (foodPlaceHolder.Nutriments.Protein * (servingSize / 100)) * servings
+	diaryEntryPlaceHolder.Calories += foodPlaceHolder.Nutriments.Calories
+	diaryEntryPlaceHolder.Fat += foodPlaceHolder.Nutriments.Fat
+	diaryEntryPlaceHolder.Carbohydrate += foodPlaceHolder.Nutriments.Carbohydrate
+	diaryEntryPlaceHolder.Protein += foodPlaceHolder.Nutriments.Protein
 
-// // }
+	return diaryEntryPlaceHolder
+}
 
-// func InsertDiaryEntryRecipe() {
-
-// }
+func createDiaryEntryArray(rows *sql.Rows) (diaryEntries models.DiaryEntries, err error) {
+	var diaryEntry models.DiaryEntry
+	err = rows.Scan(&diaryEntry.UserID, &diaryEntry.DiaryEntryID, &diaryEntry.RecipeID, &diaryEntry.Date, &diaryEntry.Meal,
+		&diaryEntry.Calories, &diaryEntry.Fat, &diaryEntry.Carbohydrate, &diaryEntry.Protein, &diaryEntry.Servings, pq.Array(&diaryEntry.Misc))
+	diaryEntries = append(diaryEntries, diaryEntry)
+	if err != nil {
+		return
+	}
+	return
+}

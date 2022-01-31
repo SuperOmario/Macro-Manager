@@ -39,7 +39,7 @@ func ScanFood(upc string) (models.Food, error) {
 	}
 
 	//converts barcode from string to an integer to give food its unique ID
-	foodId, err := strconv.ParseInt(upc, 0, 64)
+	foodId, err := strconv.ParseInt(upc, 10, 64)
 	if err != nil {
 		log.Fatal(err)
 	} else {
@@ -71,4 +71,18 @@ func GetUserFoodProducts(c *gin.Context) {
 	foods := controllers.GetPantry()
 	fmt.Println(foods)
 	c.IndentedJSON(http.StatusOK, foods)
+}
+
+func DeleteFood(c *gin.Context) {
+	foodId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		err = controllers.DeleteFood(foodId)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, foodId)
+		}
+	}
 }

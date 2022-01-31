@@ -30,7 +30,7 @@ func CreateRecipe(c *gin.Context) {
 //add a single ingredient to a recipe
 func AddRecipeIngredient(c *gin.Context) {
 	var ingredient models.Ingredient
-	recipeId, err := strconv.ParseInt(c.Param("id"), 36, 64)
+	recipeId, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, err)
 	} else {
@@ -49,7 +49,7 @@ func AddRecipeIngredient(c *gin.Context) {
 }
 
 func UpdateRecipe(c *gin.Context) {
-	recipeId, err := strconv.ParseInt(c.Param("id"), 36, 64)
+	recipeId, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	var recipeRequest models.RecipeUpdate
 	var recipe models.Recipe
 
@@ -74,7 +74,7 @@ func UpdateRecipe(c *gin.Context) {
 }
 
 func RemoveIngredient(c *gin.Context) {
-	recipeId, err := strconv.ParseInt(c.Param("id"), 36, 64)
+	recipeId, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	var ingredient models.RemoveIngredient
 
 	if err != nil {
@@ -96,7 +96,7 @@ func RemoveIngredient(c *gin.Context) {
 }
 
 func DeleteRecipe(c *gin.Context) {
-	recipeId, err := strconv.ParseInt(c.Param("id"), 36, 64)
+	recipeId, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, err)
 	} else {

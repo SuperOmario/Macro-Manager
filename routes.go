@@ -9,16 +9,19 @@ func initialiseRoutes() {
 	//admin routes
 	//GET
 	router.GET("/admin/food", handlers.GetAllFoodProducts)
+	//router.GET("/admin/recipe")
 
 	//food
 	//GET
 	router.GET("/food", handlers.GetUserFoodProducts)
 	//POST
 	router.POST("/food/:upc", handlers.GetFoodProduct)
+	//DELETE
+	router.DELETE("/food/:id", handlers.DeleteFood)
 
 	//recipe routes
 	//GET
-	//router.GET("/recipe")
+
 	//POST
 	router.POST("/recipe", handlers.CreateRecipe)
 
@@ -32,8 +35,13 @@ func initialiseRoutes() {
 
 	//diary routes
 	//GET
+	router.GET("/diary", handlers.GetAllDiaryEntriesForUser)
+	router.GET("/diary/date", handlers.GetDiaryEntriesByDate)
 
 	//POST
-	// router.POST("/diary/foodEntry", handlers.EnterFood)
+	router.POST("/diary", handlers.CreateDiaryEntry)
+
+	//DELETE
+	router.DELETE("/diary/:id", handlers.DeleteDiaryEntry)
 
 }

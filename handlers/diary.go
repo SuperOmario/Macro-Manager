@@ -1,15 +1,64 @@
 package handlers
 
-// import (
-// 	"MacroManager/controllers"
+import (
+	"MacroManager/controllers"
+	"MacroManager/models"
+	"fmt"
+	"net/http"
+	"strconv"
 
-// 	"github.com/gin-gonic/gin"
-// )
+	"github.com/gin-gonic/gin"
+)
 
-// // func EnterFood(c *gin.Context) {
-// 	var foodId int64 = 1
-// 	var servings float32 = 2
-// 	var servingSize float32 = 15
+func GetAllDiaryEntriesForUser(c *gin.Context) {
+	diaryEntries, err := controllers.GetAllDiaryEntriesForUser()
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, err)
+	} else {
+		c.IndentedJSON(http.StatusOK, diaryEntries)
+	}
+}
 
-// 	// controllers.InsertDiaryEntryFood(foodId, servings, servingSize)
-// // }
+func GetDiaryEntriesByDate(c *gin.Context) {
+	var date models.DiaryDate
+	err := c.BindJSON(&date)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		diaryEntries, err := controllers.GetDiaryEntriesByDate(date.Date)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			fmt.Println(diaryEntries)
+			c.IndentedJSON(http.StatusOK, diaryEntries)
+		}
+
+	}
+}
+
+func CreateDiaryEntry(c *gin.Context) {
+	var diaryRequest models.DiaryRequest
+	err := c.BindJSON(&diaryRequest)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		diaryEntryID := controllers.InsertDiaryEntry(diaryRequest.RecipeID, diaryRequest.Servings, diaryRequest.Date, diaryRequest.Meal)
+		if diaryEntryID == 0 {
+			c.IndentedJSON(http.StatusInternalServerError, diaryEntryID)
+		} else {
+			c.IndentedJSON(http.StatusOK, diaryEntryID)
+		}
+	}
+
+}
+
+func DeleteDiaryEntry(c *gin.Context) {
+	dairyEntryId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	fmt.Println(dairyEntryId)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		controllers.DeleteDiaryEntry(dairyEntryId)
+		c.IndentedJSON(http.StatusOK, dairyEntryId)
+	}
+}
