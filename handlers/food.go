@@ -102,3 +102,18 @@ func UpdateFood(c *gin.Context) {
 		}
 	}
 }
+
+func CreateCustomFood(c *gin.Context) {
+	var food models.CustomFood
+	err := c.BindJSON(&food)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		err = controllers.InsertCustomFood(food)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, food)
+		}
+	}
+}

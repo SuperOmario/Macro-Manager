@@ -31,3 +31,13 @@ type FoodUpdate struct {
 	Protein      float32
 	ServingSize  float32
 }
+
+type CustomFood struct {
+	Title        string
+	Calories     float32
+	Fat          float32
+	Carbohydrate float32
+	Protein      float32
+	Serving_Size float32
+	Misc         []string
+}

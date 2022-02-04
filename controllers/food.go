@@ -28,16 +28,32 @@ func InsertFood(food models.Food, upc string) {
 		err := row.Scan(&foodPlaceHolder.UserID, &foodPlaceHolder.IngredientID, &foodPlaceHolder.Barcode, &foodPlaceHolder.Title, &foodPlaceHolder.Nutriments.Calories,
 			&foodPlaceHolder.Nutriments.Fat, &foodPlaceHolder.Nutriments.Carbohydrate, &foodPlaceHolder.Nutriments.Protein, &foodPlaceHolder.Serving_Size, pq.Array(&foodPlaceHolder.Misc))
 		if err != nil {
-			rows, err := db.Query("INSERT INTO ingredient(user_id, barcode, title, calories, fat, carbohydrate, protein, serving_size, misc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+			_, err := db.Exec("INSERT INTO ingredient(user_id, barcode, title, calories, fat, carbohydrate, protein, serving_size, misc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
 				food.UserID, upc, food.Title, food.Nutriments.Calories, food.Nutriments.Fat, food.Nutriments.Carbohydrate, food.Nutriments.Protein, food.Serving_Size, pq.Array(food.Misc))
 			if err != nil {
 				log.Fatal(err)
 			}
-			defer rows.Close()
 		} else {
 			fmt.Println("Food already saved for this user")
 		}
 	}
+}
+
+func InsertCustomFood(food models.CustomFood) (err error) {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	//must make userID dynamic *TO DO*
+	_, err = db.Exec("INSERT INTO ingredient(user_id, title, calories, fat, carbohydrate, protein, serving_size, misc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+		1, food.Title, food.Calories, food.Fat, food.Carbohydrate, food.Protein, food.Serving_Size, pq.Array(food.Misc))
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	return
 }
 
 func DeleteFood(foodId int64) error {

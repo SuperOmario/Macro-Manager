@@ -16,6 +16,7 @@ func initialiseRoutes() {
 	router.GET("/food", handlers.GetUserFoodProducts)
 
 	//POST
+	router.POST("/food", handlers.CreateCustomFood)
 	router.POST("/food/:upc", handlers.GetFoodProduct)
 
 	//PATCH
