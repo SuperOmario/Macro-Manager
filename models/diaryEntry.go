@@ -1,8 +1,17 @@
 package models
 
-type DiaryEntries []DiaryEntry
+type DiaryEntries []Diary
 
 type DiaryEntry struct {
+	DiaryEntryID int64
+	UserID       int64
+	RecipeID     int64
+	Date         string
+	Meal         string
+	Servings     float32
+}
+
+type Diary struct {
 	DiaryEntryID int64
 	UserID       int64
 	RecipeID     int64
@@ -25,4 +34,8 @@ type DiaryRequest struct {
 
 type DiaryDate struct {
 	Date string
+}
+
+type DiaryUpdate struct {
+	Servings float32
 }

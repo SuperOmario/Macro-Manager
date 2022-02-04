@@ -108,3 +108,26 @@ func DeleteRecipe(c *gin.Context) {
 		}
 	}
 }
+
+func GetRecipesForUser(c *gin.Context) {
+	recipes, err := controllers.GetRecipesForUser(1)
+	if err != nil {
+		c.IndentedJSON(http.StatusNoContent, err)
+	} else {
+		c.IndentedJSON(http.StatusOK, recipes)
+	}
+}
+
+func GetRecipeById(c *gin.Context) {
+	recipeId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		recipe, err := controllers.GetRecipeById(recipeId)
+		if err != nil {
+			c.IndentedJSON(http.StatusNoContent, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, recipe)
+		}
+	}
+}

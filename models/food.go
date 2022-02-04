@@ -22,3 +22,12 @@ type Food struct {
 	Serving_Size float32  `json:"serving_quantity,string"`
 	Misc         []string `json:"allergens_tags"`
 }
+
+type FoodUpdate struct {
+	Title        string
+	Calories     float32
+	Fat          float32
+	Carbohydrate float32
+	Protein      float32
+	ServingSize  float32
+}

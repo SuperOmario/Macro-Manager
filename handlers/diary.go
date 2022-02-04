@@ -49,7 +49,22 @@ func CreateDiaryEntry(c *gin.Context) {
 			c.IndentedJSON(http.StatusOK, diaryEntryID)
 		}
 	}
+}
 
+func UpdateDiaryEntry(c *gin.Context) {
+	var diaryUpdate models.DiaryUpdate
+	ID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		err := c.BindJSON(&diaryUpdate)
+		if err != nil {
+			c.IndentedJSON(http.StatusBadRequest, err)
+		} else {
+			diaryEntry := controllers.UpdateDiaryEntry(ID, diaryUpdate.Servings)
+			c.IndentedJSON(http.StatusOK, diaryEntry)
+		}
+	}
 }
 
 func DeleteDiaryEntry(c *gin.Context) {

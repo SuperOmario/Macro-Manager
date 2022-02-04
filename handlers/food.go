@@ -86,3 +86,19 @@ func DeleteFood(c *gin.Context) {
 		}
 	}
 }
+
+func UpdateFood(c *gin.Context) {
+	foodId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	var food models.FoodUpdate
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		c.BindJSON(&food)
+		err = controllers.UpdateFood(foodId, food)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, foodId)
+		}
+	}
+}
