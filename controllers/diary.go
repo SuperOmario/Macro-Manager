@@ -18,19 +18,26 @@ func GetAllDiaryEntriesForUser() (diaryEntries models.DiaryEntries, err error) {
 		return
 	}
 
-	rows, err := db.Query("SELECT recipe_id, servings FROM diary_entry WHERE user_id=$1", 1)
+	//must change user id to be dynamic *TO DO*
+	rows, err := db.Query("SELECT * FROM diary_entry WHERE user_id=1")
 	if err != nil {
 		return
 	} else {
 		defer rows.Close()
 		for rows.Next() {
-			var ID int64
+			var RecipeID, ID, UserID int64
+			var date, meal string
 			var servings float32
-			err = rows.Scan(&ID, &servings)
+			err = rows.Scan(&ID, &UserID, &RecipeID, &date, &meal, &servings)
 			if err != nil {
 				return
 			}
-			diaryEntry := getTotalNutrimentsDiary(db, ID, servings)
+			diaryEntry := getTotalNutrimentsDiary(db, RecipeID, servings)
+			diaryEntry.UserID = UserID
+			diaryEntry.Date = date
+			diaryEntry.Meal = meal
+			diaryEntry.DiaryEntryID = ID
+			diaryEntry.RecipeID = RecipeID
 			diaryEntries = append(diaryEntries, diaryEntry)
 			if err != nil {
 				return
@@ -48,19 +55,25 @@ func GetDiaryEntriesByDate(date string) (diaryEntries models.DiaryEntries, err e
 	}
 
 	//must make user id dynamic *TO DO*
-	rows, err := db.Query("SELECT recipe_id, servings FROM diary_entry WHERE date=$1 AND user_id=1", date)
+	rows, err := db.Query("SELECT * FROM diary_entry WHERE date=$1 AND user_id=1", date)
 	if err != nil {
 		return
 	} else {
 		defer rows.Close()
 		for rows.Next() {
-			var ID int64
+			var RecipeID, ID, UserID int64
+			var date, meal string
 			var servings float32
-			err = rows.Scan(&ID, &servings)
+			err = rows.Scan(&ID, &UserID, &RecipeID, &date, &meal, &servings)
 			if err != nil {
 				return
 			}
-			diaryEntry := getTotalNutrimentsDiary(db, ID, servings)
+			diaryEntry := getTotalNutrimentsDiary(db, RecipeID, servings)
+			diaryEntry.UserID = UserID
+			diaryEntry.Date = date
+			diaryEntry.Meal = meal
+			diaryEntry.DiaryEntryID = ID
+			diaryEntry.RecipeID = RecipeID
 			diaryEntries = append(diaryEntries, diaryEntry)
 			if err != nil {
 				return

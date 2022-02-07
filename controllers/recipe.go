@@ -144,14 +144,13 @@ func GetRecipesForUser(userId int64) (recipes []models.RecipeDetails, err error)
 	} else {
 		defer rows.Close()
 		for rows.Next() {
-			var recipeDetails models.RecipeDetails
-			var recipe models.Recipe
+			var recipe models.RecipeDetails
 			rows.Scan(&recipe.RecipeID, &recipe.Title, &recipe.ServingSize)
-			recipeDetails, err = getTotalNutrimentsRecipe(db, recipe.RecipeID)
+			recipe, err = getTotalNutrimentsRecipe(db, recipe.RecipeID, recipe)
 			if err != nil {
 				return
 			}
-			recipes = append(recipes, recipeDetails)
+			recipes = append(recipes, recipe)
 		}
 	}
 	return
@@ -163,12 +162,12 @@ func GetRecipeById(recipeId int64) (recipe models.RecipeDetails, err error) {
 	if err != nil {
 		return
 	}
-
-	err = db.QueryRow("SELECT recipe_id, title, serving_size FROM recipe WHERE user_id=$1", recipeId).Scan(&recipe.RecipeID, &recipe.Title, &recipe.ServingSize)
+	//must make user id dynamic *TO DO*
+	err = db.QueryRow("SELECT recipe_id, title, serving_size FROM recipe WHERE user_id=1 AND recipe_id=$1", recipeId).Scan(&recipe.RecipeID, &recipe.Title, &recipe.ServingSize)
 	if err != nil {
 		return
 	} else {
-		recipe, err = getTotalNutrimentsRecipe(db, recipe.RecipeID)
+		recipe, err = getTotalNutrimentsRecipe(db, recipe.RecipeID, recipe)
 	}
 	return
 }
@@ -184,7 +183,7 @@ func createIngredient(ingredient models.Ingredient, recipeId int64, tx *sql.Tx, 
 }
 
 //Helper function to grab all of the ingredients involved in a specific diary entry and run calculations for total nutriments
-func getTotalNutrimentsRecipe(db *sql.DB, recipeId int64) (recipe models.RecipeDetails, err error) {
+func getTotalNutrimentsRecipe(db *sql.DB, recipeId int64, recipe models.RecipeDetails) (updatedRecipe models.RecipeDetails, err error) {
 
 	rows, err := db.Query(
 		"SELECT calories, fat, carbohydrate, protein, serving_size, misc FROM ingredient LEFT JOIN recipe_ingredient ON ingredient.ingredient_id=recipe_ingredient.ingredient_id WHERE recipe_ingredient.recipe_id=$1",
@@ -205,7 +204,7 @@ func getTotalNutrimentsRecipe(db *sql.DB, recipeId int64) (recipe models.RecipeD
 		if err != nil {
 			log.Print(err)
 		}
-		recipe = calculateNutrimentsRecipe(food, recipe)
+		updatedRecipe = calculateNutrimentsRecipe(food, recipe)
 	}
 	return
 }
