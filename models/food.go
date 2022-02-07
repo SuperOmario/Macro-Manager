@@ -11,7 +11,7 @@ type Product struct {
 type Food struct {
 	UserID       int64
 	IngredientID int64
-	Barcode      int64
+	Barcode      string
 	Title        string `json:"product_name"`
 	Nutriments   struct {
 		Calories     float32 `json:"energy-kcal_100g"`

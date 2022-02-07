@@ -38,13 +38,7 @@ func ScanFood(upc string) (models.Food, error) {
 		return foodProduct.Food, errors.New(foodProduct.Err)
 	}
 
-	//converts barcode from string to an integer to give food its unique ID
-	foodId, err := strconv.ParseInt(upc, 10, 64)
-	if err != nil {
-		log.Fatal(err)
-	} else {
-		foodProduct.Food.Barcode = int64(foodId)
-	}
+	foodProduct.Food.Barcode = upc
 
 	foodProduct.Food.UserID = 1
 	return foodProduct.Food, nil

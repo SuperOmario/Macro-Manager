@@ -8,7 +8,7 @@ func initialiseRoutes() {
 
 	//admin routes
 	//GET
-	router.GET("/admin/food", handlers.GetAllFoodProducts)
+	// router.GET("/admin/food", handlers.GetAllFoodProducts)
 	//router.GET("/admin/recipe")
 
 	//food
