@@ -1,5 +1,7 @@
 package models
 
+import "database/sql"
+
 //all the structs needed to take in and manipulate date from the spoonacular api and the database
 type Product struct {
 	Food Food   `json:"product"`
@@ -11,7 +13,7 @@ type Product struct {
 type Food struct {
 	UserID       int64
 	IngredientID int64
-	Barcode      string
+	Barcode      sql.NullString
 	Title        string `json:"product_name"`
 	Nutriments   struct {
 		Calories     float32 `json:"energy-kcal_100g"`

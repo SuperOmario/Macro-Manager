@@ -111,7 +111,7 @@ func GetPantry() []models.Food {
 			&foodPlaceHolder.Nutriments.Fat, &foodPlaceHolder.Nutriments.Carbohydrate, &foodPlaceHolder.Nutriments.Protein, &foodPlaceHolder.Serving_Size,
 			pq.Array(&foodPlaceHolder.Misc))
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
 		}
 		foods = append(foods, foodPlaceHolder)
 	}

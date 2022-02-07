@@ -3,6 +3,7 @@ package handlers
 import (
 	"MacroManager/controllers"
 	"MacroManager/models"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,7 +39,7 @@ func ScanFood(upc string) (models.Food, error) {
 		return foodProduct.Food, errors.New(foodProduct.Err)
 	}
 
-	foodProduct.Food.Barcode = upc
+	foodProduct.Food.Barcode = sql.NullString{String: upc, Valid: true}
 
 	foodProduct.Food.UserID = 1
 	return foodProduct.Food, nil
