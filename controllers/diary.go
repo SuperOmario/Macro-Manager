@@ -101,6 +101,8 @@ func InsertDiaryEntry(recipeId int64, servings float32, date string, meal string
 		log.Print(err)
 	}
 
+	db.Close()
+
 	return
 }
 
@@ -111,6 +113,8 @@ func UpdateDiaryEntry(ID int64, servings float32) error {
 		log.Print(err)
 	}
 	_, err = db.Exec("UPDATE diary_entry SET servings=$1 WHERE diary_entry_id=$2", servings, ID)
+
+	db.Close()
 
 	return err
 }
@@ -126,6 +130,8 @@ func DeleteDiaryEntry(diaryEntryID int64) {
 	if err != nil {
 		log.Print(err)
 	}
+
+	db.Close()
 }
 
 //Helper function to modify the nutriment values based on how much of a food the user wants to enter into the diary
