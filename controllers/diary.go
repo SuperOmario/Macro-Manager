@@ -28,7 +28,7 @@ func GetAllDiaryEntriesForUser() (diaryEntries models.DiaryEntries, err error) {
 			var RecipeID, ID, UserID int64
 			var date, meal string
 			var servings float32
-			err = rows.Scan(&ID, &UserID, &RecipeID, &date, &meal, &servings)
+			err = rows.Scan(&UserID, &ID, &RecipeID, &date, &meal, &servings)
 			if err != nil {
 				return
 			}
@@ -38,6 +38,7 @@ func GetAllDiaryEntriesForUser() (diaryEntries models.DiaryEntries, err error) {
 			diaryEntry.Meal = meal
 			diaryEntry.DiaryEntryID = ID
 			diaryEntry.RecipeID = RecipeID
+			diaryEntry.Servings = servings
 			diaryEntries = append(diaryEntries, diaryEntry)
 			if err != nil {
 				return
@@ -64,7 +65,7 @@ func GetDiaryEntriesByDate(date string) (diaryEntries models.DiaryEntries, err e
 			var RecipeID, ID, UserID int64
 			var date, meal string
 			var servings float32
-			err = rows.Scan(&ID, &UserID, &RecipeID, &date, &meal, &servings)
+			err = rows.Scan(&UserID, &ID, &RecipeID, &date, &meal, &servings)
 			if err != nil {
 				return
 			}
@@ -74,6 +75,7 @@ func GetDiaryEntriesByDate(date string) (diaryEntries models.DiaryEntries, err e
 			diaryEntry.Meal = meal
 			diaryEntry.DiaryEntryID = ID
 			diaryEntry.RecipeID = RecipeID
+			diaryEntry.Servings = servings
 			diaryEntries = append(diaryEntries, diaryEntry)
 			if err != nil {
 				return
