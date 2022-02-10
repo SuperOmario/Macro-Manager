@@ -15,12 +15,14 @@ func GetAllDiaryEntriesForUser() (diaryEntries models.DiaryEntries, err error) {
 	godotenv.Load()
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
+		db.Close()
 		return
 	}
 
 	//must change user id to be dynamic *TO DO*
 	rows, err := db.Query("SELECT * FROM diary_entry WHERE user_id=1")
 	if err != nil {
+		db.Close()
 		return
 	} else {
 		defer rows.Close()
@@ -30,6 +32,7 @@ func GetAllDiaryEntriesForUser() (diaryEntries models.DiaryEntries, err error) {
 			var servings float32
 			err = rows.Scan(&UserID, &ID, &RecipeID, &date, &meal, &servings)
 			if err != nil {
+				db.Close()
 				return
 			}
 			diaryEntry := getTotalNutrimentsDiary(db, RecipeID, servings)
@@ -41,9 +44,11 @@ func GetAllDiaryEntriesForUser() (diaryEntries models.DiaryEntries, err error) {
 			diaryEntry.Servings = servings
 			diaryEntries = append(diaryEntries, diaryEntry)
 			if err != nil {
+				db.Close()
 				return
 			}
 		}
+		db.Close()
 		return
 	}
 }
@@ -52,12 +57,14 @@ func GetDiaryEntriesByDate(date string) (diaryEntries models.DiaryEntries, err e
 	godotenv.Load()
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
+		db.Close()
 		return
 	}
 
 	//must make user id dynamic *TO DO*
 	rows, err := db.Query("SELECT * FROM diary_entry WHERE date=$1 AND user_id=1", date)
 	if err != nil {
+		db.Close()
 		return
 	} else {
 		defer rows.Close()
@@ -67,6 +74,7 @@ func GetDiaryEntriesByDate(date string) (diaryEntries models.DiaryEntries, err e
 			var servings float32
 			err = rows.Scan(&UserID, &ID, &RecipeID, &date, &meal, &servings)
 			if err != nil {
+				db.Close()
 				return
 			}
 			diaryEntry := getTotalNutrimentsDiary(db, RecipeID, servings)
@@ -78,9 +86,11 @@ func GetDiaryEntriesByDate(date string) (diaryEntries models.DiaryEntries, err e
 			diaryEntry.Servings = servings
 			diaryEntries = append(diaryEntries, diaryEntry)
 			if err != nil {
+				db.Close()
 				return
 			}
 		}
+		db.Close()
 		return
 	}
 }
