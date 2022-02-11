@@ -3,6 +3,7 @@ package handlers
 import (
 	"MacroManager/controllers"
 	"MacroManager/models"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,15 +39,9 @@ func ScanFood(upc string) (models.Food, error) {
 		return foodProduct.Food, errors.New(foodProduct.Err)
 	}
 
-	//converts barcode from string to an integer to give food its unique ID
-	foodId, err := strconv.ParseInt(upc, 0, 64)
-	if err != nil {
-		log.Fatal(err)
-	} else {
-		foodProduct.Food.Barcode = int(foodId)
-	}
+	foodProduct.Food.Barcode = sql.NullString{String: upc, Valid: true}
 
-	foodProduct.Food.PantryID = 1
+	foodProduct.Food.UserID = 1
 	return foodProduct.Food, nil
 }
 
@@ -57,7 +52,7 @@ func GetFoodProduct(c *gin.Context) {
 		c.IndentedJSON(http.StatusNotFound, err)
 	} else {
 		c.IndentedJSON(http.StatusOK, food)
-		controllers.SaveFood(food, upc)
+		controllers.InsertFood(food, upc)
 	}
 }
 
@@ -65,4 +60,55 @@ func GetAllFoodProducts(c *gin.Context) {
 	foods := controllers.GetAllFood()
 	fmt.Println(foods)
 	c.IndentedJSON(http.StatusOK, foods)
+}
+
+func GetUserFoodProducts(c *gin.Context) {
+	foods := controllers.GetPantry()
+	fmt.Println(foods)
+	c.IndentedJSON(http.StatusOK, foods)
+}
+
+func DeleteFood(c *gin.Context) {
+	foodId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		err = controllers.DeleteFood(foodId)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, foodId)
+		}
+	}
+}
+
+func UpdateFood(c *gin.Context) {
+	foodId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	var food models.FoodUpdate
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		c.BindJSON(&food)
+		err = controllers.UpdateFood(foodId, food)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, foodId)
+		}
+	}
+}
+
+func CreateCustomFood(c *gin.Context) {
+	var food models.CustomFood
+	err := c.BindJSON(&food)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		err = controllers.InsertCustomFood(food)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, food)
+		}
+	}
 }
