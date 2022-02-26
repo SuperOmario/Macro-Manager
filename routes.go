@@ -34,7 +34,7 @@ func initialiseRoutes() {
 	router.POST("/recipe", handlers.CreateRecipe)
 
 	//PATCH
-	router.PATCH("/recipe/food/:id", handlers.AddRecipeIngredient)
+	router.PATCH("/recipe/ingredient/:id", handlers.AddRecipeIngredient)
 	router.PATCH("/recipe/details/:id", handlers.UpdateRecipe)
 
 	//DELETE

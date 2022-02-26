@@ -3,6 +3,7 @@ package controllers
 import (
 	"MacroManager/models"
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -11,7 +12,49 @@ import (
 	"github.com/lib/pq"
 )
 
-func GetAllDiaryEntriesForUser() (diaryEntries models.DiaryEntries, err error) {
+// func GetAllDiaryEntriesForUser() (diaryEntries models.DiaryEntries, err error) {
+// 	godotenv.Load()
+// 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+// 	if err != nil {
+// 		db.Close()
+// 		return
+// 	}
+
+// 	//must change user id to be dynamic *TO DO*
+// 	rows, err := db.Query("SELECT * FROM diary_entry WHERE user_id=1")
+// 	if err != nil {
+// 		db.Close()
+// 		return
+// 	} else {
+// 		defer rows.Close()
+// 		for rows.Next() {
+// 			var RecipeID, ID, UserID int64
+// 			var date, meal string
+// 			var servings float32
+// 			err = rows.Scan(&UserID, &ID, &RecipeID, &date, &meal, &servings)
+// 			if err != nil {
+// 				db.Close()
+// 				return
+// 			}
+// 			diaryEntry := getTotalNutrimentsDiary(db, RecipeID, servings)
+// 			diaryEntry.UserID = UserID
+// 			diaryEntry.Date = date
+// 			diaryEntry.Meal = meal
+// 			diaryEntry.DiaryEntryID = ID
+// 			diaryEntry.RecipeID = RecipeID
+// 			diaryEntry.Servings = servings
+// 			diaryEntries = append(diaryEntries, diaryEntry)
+// 			if err != nil {
+// 				db.Close()
+// 				return
+// 			}
+// 		}
+// 		db.Close()
+// 		return
+// 	}
+// }
+
+func GetAllDiaryEntriesForUser() (diaries models.DiariesByDate, err error) {
 	godotenv.Load()
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -20,30 +63,46 @@ func GetAllDiaryEntriesForUser() (diaryEntries models.DiaryEntries, err error) {
 	}
 
 	//must change user id to be dynamic *TO DO*
-	rows, err := db.Query("SELECT * FROM diary_entry WHERE user_id=1")
+	rows, err := db.Query("SELECT array_agg(diary_entry_id order by diary_entry_id) as ids, array_agg(recipe_id order by diary_entry_id), date, array_agg(servings order by diary_entry_id) as recipes FROM diary_entry WHERE user_id=1 GROUP BY date;")
 	if err != nil {
+		fmt.Println(err)
 		db.Close()
 		return
 	} else {
+		var diaryEntries models.DiaryEntries
 		defer rows.Close()
 		for rows.Next() {
-			var RecipeID, ID, UserID int64
-			var date, meal string
-			var servings float32
-			err = rows.Scan(&UserID, &ID, &RecipeID, &date, &meal, &servings)
+			var Diary models.DiaryByDate
+			var RecipeIDs, DiaryEntryIDs []int64
+			var UserID int64 = 1
+			var date string
+			var servings []float32
+			err = rows.Scan(pq.Array(&DiaryEntryIDs), pq.Array(&RecipeIDs), &date, pq.Array(&servings))
 			if err != nil {
+				fmt.Println(err)
 				db.Close()
 				return
 			}
-			diaryEntry := getTotalNutrimentsDiary(db, RecipeID, servings)
-			diaryEntry.UserID = UserID
-			diaryEntry.Date = date
-			diaryEntry.Meal = meal
-			diaryEntry.DiaryEntryID = ID
-			diaryEntry.RecipeID = RecipeID
-			diaryEntry.Servings = servings
-			diaryEntries = append(diaryEntries, diaryEntry)
+			for i := range DiaryEntryIDs {
+				diaryEntry := getTotalNutrimentsDiary(db, RecipeIDs[i], servings[i])
+				diaryEntry.UserID = UserID
+				diaryEntry.Date = date
+				diaryEntry.DiaryEntryID = DiaryEntryIDs[i]
+				diaryEntry.RecipeID = RecipeIDs[i]
+				diaryEntry.Servings = servings[i]
+				diaryEntries = append(diaryEntries, diaryEntry)
+			}
+			Diary.Date = date
+			for i := range diaryEntries {
+				Diary.RecipeIDs = append(Diary.RecipeIDs, diaryEntries[i].RecipeID)
+				Diary.Calories += diaryEntries[i].Calories
+				Diary.Fat += diaryEntries[i].Fat
+				Diary.Carbohydrate += diaryEntries[i].Carbohydrate
+				Diary.Protein += diaryEntries[i].Protein
+			}
+			diaries = append(diaries, Diary)
 			if err != nil {
+				fmt.Println(err)
 				db.Close()
 				return
 			}
