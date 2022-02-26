@@ -63,7 +63,7 @@ func GetAllDiaryEntriesForUser() (diaries models.DiariesByDate, err error) {
 	}
 
 	//must change user id to be dynamic *TO DO*
-	rows, err := db.Query("SELECT array_agg(diary_entry_id order by diary_entry_id) as ids, array_agg(recipe_id order by diary_entry_id), date, array_agg(servings order by diary_entry_id) as recipes FROM diary_entry WHERE user_id=1 GROUP BY date;")
+	rows, err := db.Query("SELECT array_agg(diary_entry_id order by diary_entry_id) as ids, array_agg(recipe_id order by diary_entry_id), date, array_agg(servings order by diary_entry_id) as recipes FROM diary_entry WHERE user_id=1 GROUP BY date ORDER BY date DESC;")
 	if err != nil {
 		fmt.Println(err)
 		db.Close()
