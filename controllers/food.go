@@ -17,6 +17,7 @@ func InsertFood(food models.Food, upc string) {
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Println(err)
+		db.Close()
 	}
 
 	// must change user id to be dynamic when implementing that feature *TO DO*
@@ -66,9 +67,12 @@ func DeleteFood(foodId int64) error {
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Println(err)
+		db.Close()
+		return err
 	}
 
 	_, err = db.Exec("DELETE FROM ingredient WHERE ingredient_id=$1", foodId)
+	db.Close()
 	return err
 }
 
