@@ -142,38 +142,33 @@ func UpdateFood(ID int64, food models.FoodUpdate) error {
 		log.Print(err)
 	}
 
-	var barcode string
-	err = db.QueryRow("SELECT barcode FROM ingredient WHERE ingredient_id=$1", ID).Scan(&barcode)
-	if err != nil {
-		db.Close()
-		log.Print(err)
+	var barcode string = ""
+	_ = db.QueryRow("SELECT barcode FROM ingredient WHERE ingredient_id=$1", ID).Scan(&barcode)
+	if barcode != "" && food.ServingSize != 0 {
+		fmt.Print("Case 1 ", barcode, "    ", food.ServingSize)
+		_, err = db.Exec("UPDATE ingredient SET title=$1, serving_size=$2 WHERE ingredient_id=$3", food.Title, food.ServingSize, ID)
+		if err != nil {
+			db.Close()
+			log.Print(err)
+			return err
+		}
+	} else if barcode == "" && food.ServingSize != 0 {
+		fmt.Print("Case 2 ", barcode, "    ", food.ServingSize)
+		_, err = db.Exec("UPDATE ingredient SET calories=$1, fat=$2, carbohydrate=$3, protein=$4, serving_size=$5, title=$6 WHERE ingredient_id=$7", food.Calories,
+			food.Fat, food.Carbohydrate, food.Protein, food.ServingSize, food.Title, ID)
+		if err != nil {
+			db.Close()
+			log.Print(err)
+			return err
+		}
 	} else {
-		if barcode != "" && food.ServingSize != 0 {
-			fmt.Print("Case 1 ", barcode, "    ", food.ServingSize)
-			_, err = db.Exec("UPDATE ingredient SET title=$1, serving_size=$2 WHERE ingredient_id=$3", food.Title, food.ServingSize, ID)
-			if err != nil {
-				db.Close()
-				log.Print(err)
-				return err
-			}
-		} else if barcode == "" && food.ServingSize != 0 {
-			fmt.Print("Case 2 ", barcode, "    ", food.ServingSize)
-			_, err = db.Exec("UPDATE ingredient SET calories=$1, fat=$2, carbohydrate=$3, protein=$4, serving_size=$5, title=$6 WHERE ingredient_id=$7", food.Calories,
-				food.Fat, food.Carbohydrate, food.Protein, food.ServingSize, food.Title, ID)
-			if err != nil {
-				db.Close()
-				log.Print(err)
-				return err
-			}
-		} else {
-			fmt.Print("Case 3 ", barcode, "    ", food.ServingSize)
-			_, err = db.Exec("UPDATE ingredient SET calories=$1, fat=$2, carbohydrate=$3, protein=$4, title=$5 WHERE ingredient_id=$6", food.Calories,
-				food.Fat, food.Carbohydrate, food.Protein, food.Title, ID)
-			if err != nil {
-				db.Close()
-				log.Print(err)
-				return err
-			}
+		fmt.Print("Case 3 ", barcode, "    ", food.ServingSize)
+		_, err = db.Exec("UPDATE ingredient SET calories=$1, fat=$2, carbohydrate=$3, protein=$4, title=$5 WHERE ingredient_id=$6", food.Calories,
+			food.Fat, food.Carbohydrate, food.Protein, food.Title, ID)
+		if err != nil {
+			db.Close()
+			log.Print(err)
+			return err
 		}
 	}
 	db.Close()
