@@ -218,20 +218,23 @@ func getTotalNutrimentsRecipe(db *sql.DB, recipeId int64, recipe models.RecipeDe
 	if err != nil {
 		log.Print(err)
 		return
-	}
-	if !rows.Next() {
-		deleteEmptyRecipe(db, recipeId)
-		err = errors.New("deleted recipe due to no ingredients")
-		return
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var food models.Food
-		err := rows.Scan(&food.Nutriments.Calories, &food.Nutriments.Fat, &food.Nutriments.Carbohydrate, &food.Nutriments.Protein, &food.Serving_Size, pq.Array(&food.Misc))
-		if err != nil {
-			log.Print(err)
+	} else {
+		counter := 0
+		defer rows.Close()
+		for rows.Next() {
+			var food models.Food
+			err := rows.Scan(&food.Nutriments.Calories, &food.Nutriments.Fat, &food.Nutriments.Carbohydrate, &food.Nutriments.Protein, &food.Serving_Size, pq.Array(&food.Misc))
+			if err != nil {
+				log.Print(err)
+			}
+			updatedRecipe = calculateNutrimentsRecipe(food, recipe)
+			counter++
 		}
-		updatedRecipe = calculateNutrimentsRecipe(food, recipe)
+		if counter == 0 {
+			deleteEmptyRecipe(db, recipeId)
+			err = errors.New("deleted recipe due to no ingredients")
+			return
+		}
 	}
 	return
 }

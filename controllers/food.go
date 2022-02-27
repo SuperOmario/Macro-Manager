@@ -29,10 +29,13 @@ func InsertFood(food models.Food, upc string) {
 		err := row.Scan(&foodPlaceHolder.UserID, &foodPlaceHolder.IngredientID, &foodPlaceHolder.Barcode, &foodPlaceHolder.Title, &foodPlaceHolder.Nutriments.Calories,
 			&foodPlaceHolder.Nutriments.Fat, &foodPlaceHolder.Nutriments.Carbohydrate, &foodPlaceHolder.Nutriments.Protein, &foodPlaceHolder.Serving_Size, pq.Array(&foodPlaceHolder.Misc))
 		if err != nil {
-			_, err := db.Exec("INSERT INTO ingredient(user_id, barcode, title, calories, fat, carbohydrate, protein, serving_size, misc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-				food.UserID, upc, food.Title, food.Nutriments.Calories, food.Nutriments.Fat, food.Nutriments.Carbohydrate, food.Nutriments.Protein, food.Serving_Size, pq.Array(food.Misc))
+			err = db.QueryRow("INSERT INTO ingredient(user_id, barcode, title, calories, fat, carbohydrate, protein, serving_size, misc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING ingredient_id",
+				food.UserID, upc, food.Title, food.Nutriments.Calories, food.Nutriments.Fat, food.Nutriments.Carbohydrate, food.Nutriments.Protein, food.Serving_Size, pq.Array(food.Misc)).Scan(&foodPlaceHolder.IngredientID)
 			if err != nil {
 				log.Println(err)
+			} else {
+				ingredient := models.Ingredient{IngredientID: foodPlaceHolder.IngredientID, Servings: 1}
+				InsertRecipe(food.Title, food.Serving_Size, ingredient)
 			}
 		} else {
 			fmt.Println("Food already saved for this user")
