@@ -69,12 +69,10 @@ func GetAllDiaryEntriesForUser() (diaries models.DiariesByDate, err error) {
 		db.Close()
 		return
 	} else {
-		var diaryEntries models.DiaryEntries
 		defer rows.Close()
 		for rows.Next() {
 			var Diary models.DiaryByDate
 			var RecipeIDs, DiaryEntryIDs []int64
-			var UserID int64 = 1
 			var date string
 			var servings []float32
 			err = rows.Scan(pq.Array(&DiaryEntryIDs), pq.Array(&RecipeIDs), &date, pq.Array(&servings))
@@ -84,21 +82,14 @@ func GetAllDiaryEntriesForUser() (diaries models.DiariesByDate, err error) {
 				return
 			}
 			for i := range DiaryEntryIDs {
+				fmt.Println("recipeIDs:   ", len(RecipeIDs))
 				diaryEntry := getTotalNutrimentsDiary(db, RecipeIDs[i], servings[i])
-				diaryEntry.UserID = UserID
-				diaryEntry.Date = date
-				diaryEntry.DiaryEntryID = DiaryEntryIDs[i]
-				diaryEntry.RecipeID = RecipeIDs[i]
-				diaryEntry.Servings = servings[i]
-				diaryEntries = append(diaryEntries, diaryEntry)
-			}
-			Diary.Date = date
-			for i := range diaryEntries {
-				Diary.RecipeIDs = append(Diary.RecipeIDs, diaryEntries[i].RecipeID)
-				Diary.Calories += diaryEntries[i].Calories
-				Diary.Fat += diaryEntries[i].Fat
-				Diary.Carbohydrate += diaryEntries[i].Carbohydrate
-				Diary.Protein += diaryEntries[i].Protein
+				Diary.RecipeIDs = append(Diary.RecipeIDs, RecipeIDs[i])
+				Diary.Date = date
+				Diary.Calories += diaryEntry.Calories
+				Diary.Fat += diaryEntry.Fat
+				Diary.Carbohydrate += diaryEntry.Carbohydrate
+				Diary.Protein += diaryEntry.Protein
 			}
 			diaries = append(diaries, Diary)
 			if err != nil {
@@ -107,9 +98,9 @@ func GetAllDiaryEntriesForUser() (diaries models.DiariesByDate, err error) {
 				return
 			}
 		}
-		db.Close()
-		return
 	}
+	db.Close()
+	return
 }
 
 func GetDiaryEntriesByDate(date string) (diaryEntries models.DiaryEntries, err error) {
