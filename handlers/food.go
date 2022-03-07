@@ -67,6 +67,7 @@ func GetListedFoods(c *gin.Context) {
 	var ids []int
 	err := c.BindJSON(&ids)
 	if err != nil {
+		fmt.Println(err)
 		c.IndentedJSON(http.StatusBadRequest, err)
 	} else {
 		foods := controllers.GetListedFoods(ids)
