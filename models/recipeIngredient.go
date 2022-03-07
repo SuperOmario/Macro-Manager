@@ -14,3 +14,7 @@ type Ingredient struct {
 type RemoveIngredient struct {
 	IngredientID int64
 }
+
+type FoodList struct {
+	IngredientIDs []string `json:"IDs"`
+}

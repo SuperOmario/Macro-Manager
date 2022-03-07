@@ -116,6 +116,36 @@ func GetAllFood() []models.Food {
 	return foods
 }
 
+func GetListedFoods(ids []int) []models.Food {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		db.Close()
+		log.Println(err)
+	}
+	// must change user id to be dynamic when implementing that feature *TO DO*
+	rows, err := db.Query("SELECT * FROM ingredient WHERE user_id=1 AND ingredient_id = ANY($1)", pq.Array(ids))
+	if err != nil {
+		db.Close()
+		log.Println(err)
+	}
+	defer rows.Close()
+	var foods []models.Food
+	for rows.Next() {
+		var foodPlaceHolder models.Food
+		err := rows.Scan(&foodPlaceHolder.UserID, &foodPlaceHolder.IngredientID, &foodPlaceHolder.Barcode, &foodPlaceHolder.Title, &foodPlaceHolder.Nutriments.Calories,
+			&foodPlaceHolder.Nutriments.Fat, &foodPlaceHolder.Nutriments.Carbohydrate, &foodPlaceHolder.Nutriments.Protein, &foodPlaceHolder.Serving_Size,
+			pq.Array(&foodPlaceHolder.Misc))
+		if err != nil {
+			db.Close()
+			log.Print(err)
+		}
+		foods = append(foods, foodPlaceHolder)
+	}
+	db.Close()
+	return foods
+}
+
 func GetPantry() []models.Food {
 	godotenv.Load()
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))

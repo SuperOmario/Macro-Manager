@@ -14,6 +14,7 @@ func initialiseRoutes() {
 	//food
 	//GET
 	router.GET("/food", handlers.GetUserFoodProducts)
+	router.GET("/food/ingredients", handlers.GetListedFoods)
 
 	//POST
 	router.POST("/food", handlers.CreateCustomFood)
