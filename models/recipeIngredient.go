@@ -16,5 +16,5 @@ type RemoveIngredient struct {
 }
 
 type FoodList struct {
-	IngredientIDs []int
+	IngredientIDs []int `json:"IDs"`
 }

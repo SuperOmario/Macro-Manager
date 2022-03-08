@@ -70,6 +70,8 @@ func GetListedFoods(c *gin.Context) {
 		fmt.Println(err)
 		c.IndentedJSON(http.StatusBadRequest, err)
 	} else {
+		fmt.Println(ingredients)
+		fmt.Println(ingredients.IngredientIDs)
 		foods := controllers.GetListedFoods(ingredients.IngredientIDs)
 		c.IndentedJSON(http.StatusOK, foods)
 	}
