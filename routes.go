@@ -15,6 +15,8 @@ func initialiseRoutes() {
 	//GET
 	router.GET("/food", handlers.GetUserFoodProducts)
 	router.GET("/food/ingredients", handlers.GetListedFoods)
+	// should be a get request but Android doesn't allow GET requests with bodies
+	router.POST("/food/ingredients", handlers.GetListedFoods)
 
 	//POST
 	router.POST("/food", handlers.CreateCustomFood)
