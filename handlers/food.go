@@ -64,13 +64,13 @@ func GetFoodProduct(c *gin.Context) {
 
 func GetListedFoods(c *gin.Context) {
 	// var ids models.FoodList
-	var ids []int
-	err := c.BindJSON(&ids)
+	var ingredients models.FoodList
+	err := c.BindJSON(&ingredients)
 	if err != nil {
 		fmt.Println(err)
 		c.IndentedJSON(http.StatusBadRequest, err)
 	} else {
-		foods := controllers.GetListedFoods(ids)
+		foods := controllers.GetListedFoods(ingredients.IngredientIDs)
 		c.IndentedJSON(http.StatusOK, foods)
 	}
 }
