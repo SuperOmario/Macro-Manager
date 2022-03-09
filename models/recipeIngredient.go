@@ -15,6 +15,8 @@ type RemoveIngredient struct {
 	IngredientID int64
 }
 
+type FoodListRequest []FoodList
+
 type FoodList struct {
 	IngredientIDs []int `json:"IDs"`
 }

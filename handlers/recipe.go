@@ -131,3 +131,17 @@ func GetRecipeById(c *gin.Context) {
 		}
 	}
 }
+
+func GetRecipeIngredientsByID(c *gin.Context) {
+	recipeId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		ingredients, err := controllers.GetRecipeIngredientsByID(recipeId)
+		if err != nil {
+			c.IndentedJSON(http.StatusNoContent, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, ingredients)
+		}
+	}
+}

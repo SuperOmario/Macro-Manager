@@ -159,6 +159,7 @@ func GetRecipesForUser(userId int64) (recipes []models.RecipeDetails, err error)
 		return
 	}
 
+	//*TODO* make user id dynamic
 	rows, err := db.Query("SELECT recipe_id, title, serving_size FROM recipe WHERE user_id=$1", userId)
 	if err != nil {
 		db.Close()
@@ -253,4 +254,28 @@ func calculateNutrimentsRecipe(foodPlaceHolder models.Food, recipePlaceHolder mo
 func deleteEmptyRecipe(db *sql.DB, recipeId int64) error {
 	_, err := db.Exec("DELETE FROM recipe WHERE recipe_id=$1", recipeId)
 	return err
+}
+
+func GetRecipeIngredientsByID(recipeID int64) (ingredients []models.Ingredient, err error) {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		db.Close()
+		return
+	}
+
+	rows, err := db.Query("SELECT ingredient_id, servings FROM recipe_ingredient WHERE recipe_id=$1", recipeID)
+	if err != nil {
+		db.Close()
+		return
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			var ingredient models.Ingredient
+			rows.Scan(&ingredient.IngredientID, &ingredient.Servings)
+			ingredients = append(ingredients, ingredient)
+		}
+	}
+	db.Close()
+	return
 }
