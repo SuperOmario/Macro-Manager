@@ -264,7 +264,7 @@ func GetRecipeIngredientsByID(recipeID int64) (ingredients []models.IngredientFo
 		return
 	}
 
-	rows, err := db.Query("SELECT ingredient.title, ingredient.ingredient_id, ingredient.serving_size, recipe_ingredient.servings FROM ingredient LEFT JOIN recipe_ingredient ON ingredient.ingredient_id = recipe_ingredient.ingredient_id WHERE recipe_id=$1", recipeID)
+	rows, err := db.Query("SELECT recipe_ingredient_id, ingredient.title, ingredient.ingredient_id, ingredient.serving_size, recipe_ingredient.servings FROM ingredient LEFT JOIN recipe_ingredient ON ingredient.ingredient_id = recipe_ingredient.ingredient_id WHERE recipe_id=$1", recipeID)
 	if err != nil {
 		db.Close()
 		return
@@ -272,10 +272,26 @@ func GetRecipeIngredientsByID(recipeID int64) (ingredients []models.IngredientFo
 		defer rows.Close()
 		for rows.Next() {
 			var ingredient models.IngredientForRecipe
-			rows.Scan(&ingredient.Title, &ingredient.IngredientID, &ingredient.ServingSize, &ingredient.Servings)
+			rows.Scan(&ingredient.RecipeIngredientID, &ingredient.Title, &ingredient.IngredientID, &ingredient.ServingSize, &ingredient.Servings)
 			ingredients = append(ingredients, ingredient)
 		}
 	}
 	db.Close()
 	return
+}
+
+func UpdateIngredients(ingredients models.IFRRequest) error {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		db.Close()
+		log.Println(err)
+	}
+
+	for _, ingredient := range ingredients {
+		_, err = db.Exec("UPDATE recipe_ingredient SET servings=$1 WHERE recipe_ingredient_id=$2", ingredient.Servings, ingredient.RecipeIngredientID)
+	}
+
+	db.Close()
+	return err
 }

@@ -39,6 +39,7 @@ func initialiseRoutes() {
 
 	//PATCH
 	router.PATCH("/recipe/ingredient/:id", handlers.AddRecipeIngredient)
+	router.PATCH("/recipe/ingredients", handlers.UpdateIngredients)
 	router.PATCH("/recipe/details/:id", handlers.UpdateRecipe)
 
 	//DELETE

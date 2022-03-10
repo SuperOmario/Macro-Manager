@@ -11,11 +11,14 @@ type Ingredient struct {
 	Servings     float32
 }
 
+type IFRRequest []IngredientForRecipe
+
 type IngredientForRecipe struct {
-	Title        string
-	IngredientID int64
-	ServingSize  float32
-	Servings     float32
+	RecipeIngredientID int64
+	Title              string
+	IngredientID       int64
+	ServingSize        float32
+	Servings           float32
 }
 
 type RemoveIngredient struct {

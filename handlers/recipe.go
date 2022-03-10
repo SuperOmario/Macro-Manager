@@ -145,3 +145,18 @@ func GetRecipeIngredientsByID(c *gin.Context) {
 		}
 	}
 }
+
+func UpdateIngredients(c *gin.Context) {
+	var ingredients models.IFRRequest
+	err := c.BindJSON(&ingredients)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		err = controllers.UpdateIngredients(ingredients)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, ingredients)
+		}
+	}
+}

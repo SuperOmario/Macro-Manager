@@ -14,7 +14,7 @@ import (
 
 //checks if food is already in the current users pantry and if not inserts it into the database
 func InsertFood(food models.Food, upc string) (id string, err error) {
-	id = ""
+	var returnedId int64
 	godotenv.Load()
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -35,13 +35,13 @@ func InsertFood(food models.Food, upc string) (id string, err error) {
 			&foodPlaceHolder.Nutriments.Fat, &foodPlaceHolder.Nutriments.Carbohydrate, &foodPlaceHolder.Nutriments.Protein, &foodPlaceHolder.Serving_Size, pq.Array(&foodPlaceHolder.Misc))
 		if err != nil {
 			err = db.QueryRow("INSERT INTO ingredient(user_id, barcode, title, calories, fat, carbohydrate, protein, serving_size, misc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING ingredient_id",
-				food.UserID, upc, food.Title, food.Nutriments.Calories, food.Nutriments.Fat, food.Nutriments.Carbohydrate, food.Nutriments.Protein, food.Serving_Size, pq.Array(food.Misc)).Scan(&id)
+				food.UserID, upc, food.Title, food.Nutriments.Calories, food.Nutriments.Fat, food.Nutriments.Carbohydrate, food.Nutriments.Protein, food.Serving_Size, pq.Array(food.Misc)).Scan(&returnedId)
 			if err != nil {
 				log.Println(err)
 				db.Close()
 				return
 			} else {
-				ingredient := models.Ingredient{IngredientID: foodPlaceHolder.IngredientID, Servings: 1}
+				ingredient := models.Ingredient{IngredientID: returnedId, Servings: 1}
 				InsertRecipe(food.Title, food.Serving_Size, ingredient)
 				return
 			}
@@ -63,13 +63,16 @@ func InsertCustomFood(food models.CustomFood) (err error) {
 		return
 	}
 	//must make userID dynamic *TO DO*
-	_, err = db.Exec("INSERT INTO ingredient(user_id, title, calories, fat, carbohydrate, protein, serving_size, misc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-		1, food.Title, food.Calories, food.Fat, food.Carbohydrate, food.Protein, food.Serving_Size, pq.Array(food.Misc))
+	var id int64
+	err = db.QueryRow("INSERT INTO ingredient(user_id, title, calories, fat, carbohydrate, protein, serving_size, misc) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING ingredient_id",
+		1, food.Title, food.Calories, food.Fat, food.Carbohydrate, food.Protein, food.Serving_Size, pq.Array(food.Misc)).Scan(&id)
 	if err != nil {
 		log.Print(err)
 		db.Close()
 		return
 	}
+	ingredient := models.Ingredient{IngredientID: id, Servings: 1}
+	InsertRecipe(food.Title, food.Serving_Size, ingredient)
 	db.Close()
 	return
 }
