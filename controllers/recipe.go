@@ -256,7 +256,7 @@ func deleteEmptyRecipe(db *sql.DB, recipeId int64) error {
 	return err
 }
 
-func GetRecipeIngredientsByID(recipeID int64) (ingredients []models.Ingredient, err error) {
+func GetRecipeIngredientsByID(recipeID int64) (ingredients []models.IngredientForRecipe, err error) {
 	godotenv.Load()
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -264,15 +264,15 @@ func GetRecipeIngredientsByID(recipeID int64) (ingredients []models.Ingredient, 
 		return
 	}
 
-	rows, err := db.Query("SELECT ingredient_id, servings FROM recipe_ingredient WHERE recipe_id=$1", recipeID)
+	rows, err := db.Query("SELECT ingredient.title, ingredient.ingredient_id, ingredient.serving_size, recipe_ingredient.servings FROM ingredient LEFT JOIN recipe_ingredient ON ingredient.ingredient_id = recipe_ingredient.ingredient_id WHERE recipe_id=$1", recipeID)
 	if err != nil {
 		db.Close()
 		return
 	} else {
 		defer rows.Close()
 		for rows.Next() {
-			var ingredient models.Ingredient
-			rows.Scan(&ingredient.IngredientID, &ingredient.Servings)
+			var ingredient models.IngredientForRecipe
+			rows.Scan(&ingredient.Title, &ingredient.IngredientID, &ingredient.ServingSize, &ingredient.Servings)
 			ingredients = append(ingredients, ingredient)
 		}
 	}

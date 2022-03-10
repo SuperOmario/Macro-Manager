@@ -11,6 +11,13 @@ type Ingredient struct {
 	Servings     float32
 }
 
+type IngredientForRecipe struct {
+	Title        string
+	IngredientID int64
+	ServingSize  float32
+	Servings     float32
+}
+
 type RemoveIngredient struct {
 	IngredientID int64
 }
