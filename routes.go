@@ -34,6 +34,8 @@ func initialiseRoutes() {
 	router.GET("recipe/:id", handlers.GetRecipeById)
 	router.GET("recipe/ingredients/:id", handlers.GetRecipeIngredientsByID)
 	router.GET("recipe/recipes", handlers.GetListedRecipes)
+	// should be a get request but Android doesn't allow GET requests with bodies
+	router.POST("/recipe/recipes", handlers.GetListedRecipes)
 
 	//POST
 	router.POST("/recipe", handlers.CreateRecipe)
