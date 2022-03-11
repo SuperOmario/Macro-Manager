@@ -305,7 +305,7 @@ func GetListedRecipes(ids []int) (recipes []models.RecipeDetails, err error) {
 	}
 	var userId int64 = 1
 	// must change user id to be dynamic when implementing that feature *TO DO*
-	rows, err := db.Query("SELECT recipe_id, title, serving_size FROM recipe WHERE user_id=$1 AND ingredient_id = ANY($2)", userId, pq.Array(ids))
+	rows, err := db.Query("SELECT recipe_id, title, serving_size FROM recipe WHERE user_id=$1 AND recipe_id = ANY($2)", userId, pq.Array(ids))
 	if err != nil {
 		db.Close()
 		return
