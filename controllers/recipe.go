@@ -214,7 +214,7 @@ func createIngredient(ingredient models.Ingredient, recipeId int64, tx *sql.Tx, 
 func getTotalNutrimentsRecipe(db *sql.DB, recipeId int64, recipe models.RecipeDetails) (updatedRecipe models.RecipeDetails, err error) {
 
 	rows, err := db.Query(
-		"SELECT calories, fat, carbohydrate, protein, serving_size, misc FROM ingredient LEFT JOIN recipe_ingredient ON ingredient.ingredient_id=recipe_ingredient.ingredient_id WHERE recipe_ingredient.recipe_id=$1",
+		"SELECT calories, fat, carbohydrate, protein, serving_size, misc, recipe_ingredient.servings FROM ingredient LEFT JOIN recipe_ingredient ON ingredient.ingredient_id=recipe_ingredient.ingredient_id WHERE recipe_ingredient.recipe_id=$1",
 		recipeId)
 	if err != nil {
 		log.Print(err)
@@ -224,11 +224,12 @@ func getTotalNutrimentsRecipe(db *sql.DB, recipeId int64, recipe models.RecipeDe
 		defer rows.Close()
 		for rows.Next() {
 			var food models.Food
-			err := rows.Scan(&food.Nutriments.Calories, &food.Nutriments.Fat, &food.Nutriments.Carbohydrate, &food.Nutriments.Protein, &food.Serving_Size, pq.Array(&food.Misc))
+			var servings float32
+			err := rows.Scan(&food.Nutriments.Calories, &food.Nutriments.Fat, &food.Nutriments.Carbohydrate, &food.Nutriments.Protein, &food.Serving_Size, pq.Array(&food.Misc), &servings)
 			if err != nil {
 				log.Print(err)
 			}
-			updatedRecipe = calculateNutrimentsRecipe(food, recipe)
+			updatedRecipe = calculateNutrimentsRecipe(food, recipe, servings)
 			counter++
 		}
 		if counter == 0 {
@@ -241,11 +242,11 @@ func getTotalNutrimentsRecipe(db *sql.DB, recipeId int64, recipe models.RecipeDe
 }
 
 // helper function to calculate the nutriments of a recipe
-func calculateNutrimentsRecipe(foodPlaceHolder models.Food, recipePlaceHolder models.RecipeDetails) models.RecipeDetails {
-	recipePlaceHolder.Calories += foodPlaceHolder.Nutriments.Calories
-	recipePlaceHolder.Fat += foodPlaceHolder.Nutriments.Fat
-	recipePlaceHolder.Carbohydrate += foodPlaceHolder.Nutriments.Carbohydrate
-	recipePlaceHolder.Protein += foodPlaceHolder.Nutriments.Protein
+func calculateNutrimentsRecipe(foodPlaceHolder models.Food, recipePlaceHolder models.RecipeDetails, servings float32) models.RecipeDetails {
+	recipePlaceHolder.Calories += (foodPlaceHolder.Nutriments.Calories * servings)
+	recipePlaceHolder.Fat += (foodPlaceHolder.Nutriments.Fat * servings)
+	recipePlaceHolder.Carbohydrate += (foodPlaceHolder.Nutriments.Carbohydrate * servings)
+	recipePlaceHolder.Protein += (foodPlaceHolder.Nutriments.Protein * servings)
 	recipePlaceHolder.Misc = append(recipePlaceHolder.Misc, foodPlaceHolder.Misc...)
 
 	return recipePlaceHolder
