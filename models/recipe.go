@@ -30,3 +30,16 @@ type RecipeUpdate struct {
 	Title       string
 	ServingSize float32
 }
+
+type RecipeMultipleRequest struct {
+	RecipeId int64
+	Servings float32
+	Date     string
+	Meal     string
+}
+
+type RecipeListRequest []FoodList
+
+type RecipeList struct {
+	RecipeIDs []int `json:"IDs"`
+}

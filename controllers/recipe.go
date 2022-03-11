@@ -159,6 +159,7 @@ func GetRecipesForUser(userId int64) (recipes []models.RecipeDetails, err error)
 		return
 	}
 
+	//*TODO* make user id dynamic
 	rows, err := db.Query("SELECT recipe_id, title, serving_size FROM recipe WHERE user_id=$1", userId)
 	if err != nil {
 		db.Close()
@@ -213,35 +214,39 @@ func createIngredient(ingredient models.Ingredient, recipeId int64, tx *sql.Tx, 
 func getTotalNutrimentsRecipe(db *sql.DB, recipeId int64, recipe models.RecipeDetails) (updatedRecipe models.RecipeDetails, err error) {
 
 	rows, err := db.Query(
-		"SELECT calories, fat, carbohydrate, protein, serving_size, misc FROM ingredient LEFT JOIN recipe_ingredient ON ingredient.ingredient_id=recipe_ingredient.ingredient_id WHERE recipe_ingredient.recipe_id=$1",
+		"SELECT calories, fat, carbohydrate, protein, serving_size, misc, recipe_ingredient.servings FROM ingredient LEFT JOIN recipe_ingredient ON ingredient.ingredient_id=recipe_ingredient.ingredient_id WHERE recipe_ingredient.recipe_id=$1",
 		recipeId)
 	if err != nil {
 		log.Print(err)
 		return
-	}
-	if !rows.Next() {
-		deleteEmptyRecipe(db, recipeId)
-		err = errors.New("deleted recipe due to no ingredients")
-		return
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var food models.Food
-		err := rows.Scan(&food.Nutriments.Calories, &food.Nutriments.Fat, &food.Nutriments.Carbohydrate, &food.Nutriments.Protein, &food.Serving_Size, pq.Array(&food.Misc))
-		if err != nil {
-			log.Print(err)
+	} else {
+		counter := 0
+		defer rows.Close()
+		for rows.Next() {
+			var food models.Food
+			var servings float32
+			err := rows.Scan(&food.Nutriments.Calories, &food.Nutriments.Fat, &food.Nutriments.Carbohydrate, &food.Nutriments.Protein, &food.Serving_Size, pq.Array(&food.Misc), &servings)
+			if err != nil {
+				log.Print(err)
+			}
+			updatedRecipe = calculateNutrimentsRecipe(food, recipe, servings)
+			counter++
 		}
-		updatedRecipe = calculateNutrimentsRecipe(food, recipe)
+		if counter == 0 {
+			deleteEmptyRecipe(db, recipeId)
+			err = errors.New("deleted recipe due to no ingredients")
+			return
+		}
 	}
 	return
 }
 
 // helper function to calculate the nutriments of a recipe
-func calculateNutrimentsRecipe(foodPlaceHolder models.Food, recipePlaceHolder models.RecipeDetails) models.RecipeDetails {
-	recipePlaceHolder.Calories += foodPlaceHolder.Nutriments.Calories
-	recipePlaceHolder.Fat += foodPlaceHolder.Nutriments.Fat
-	recipePlaceHolder.Carbohydrate += foodPlaceHolder.Nutriments.Carbohydrate
-	recipePlaceHolder.Protein += foodPlaceHolder.Nutriments.Protein
+func calculateNutrimentsRecipe(foodPlaceHolder models.Food, recipePlaceHolder models.RecipeDetails, servings float32) models.RecipeDetails {
+	recipePlaceHolder.Calories += (foodPlaceHolder.Nutriments.Calories * servings)
+	recipePlaceHolder.Fat += (foodPlaceHolder.Nutriments.Fat * servings)
+	recipePlaceHolder.Carbohydrate += (foodPlaceHolder.Nutriments.Carbohydrate * servings)
+	recipePlaceHolder.Protein += (foodPlaceHolder.Nutriments.Protein * servings)
 	recipePlaceHolder.Misc = append(recipePlaceHolder.Misc, foodPlaceHolder.Misc...)
 
 	return recipePlaceHolder
@@ -250,4 +255,74 @@ func calculateNutrimentsRecipe(foodPlaceHolder models.Food, recipePlaceHolder mo
 func deleteEmptyRecipe(db *sql.DB, recipeId int64) error {
 	_, err := db.Exec("DELETE FROM recipe WHERE recipe_id=$1", recipeId)
 	return err
+}
+
+func GetRecipeIngredientsByID(recipeID int64) (ingredients []models.IngredientForRecipe, err error) {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		db.Close()
+		return
+	}
+
+	rows, err := db.Query("SELECT recipe_ingredient_id, ingredient.title, ingredient.ingredient_id, ingredient.serving_size, recipe_ingredient.servings FROM ingredient LEFT JOIN recipe_ingredient ON ingredient.ingredient_id = recipe_ingredient.ingredient_id WHERE recipe_id=$1", recipeID)
+	if err != nil {
+		db.Close()
+		return
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			var ingredient models.IngredientForRecipe
+			rows.Scan(&ingredient.RecipeIngredientID, &ingredient.Title, &ingredient.IngredientID, &ingredient.ServingSize, &ingredient.Servings)
+			ingredients = append(ingredients, ingredient)
+		}
+	}
+	db.Close()
+	return
+}
+
+func UpdateIngredients(ingredients models.IFRRequest) error {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		db.Close()
+		log.Println(err)
+	}
+
+	for _, ingredient := range ingredients {
+		_, err = db.Exec("UPDATE recipe_ingredient SET servings=$1 WHERE recipe_ingredient_id=$2", ingredient.Servings, ingredient.RecipeIngredientID)
+	}
+
+	db.Close()
+	return err
+}
+
+func GetListedRecipes(ids []int) (recipes []models.RecipeDetails, err error) {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		db.Close()
+		log.Println(err)
+	}
+	var userId int64 = 1
+	// must change user id to be dynamic when implementing that feature *TO DO*
+	rows, err := db.Query("SELECT recipe_id, title, serving_size FROM recipe WHERE user_id=$1 AND recipe_id = ANY($2)", userId, pq.Array(ids))
+	if err != nil {
+		db.Close()
+		return
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			var recipe models.RecipeDetails
+			rows.Scan(&recipe.RecipeID, &recipe.Title, &recipe.ServingSize)
+			recipe, err = getTotalNutrimentsRecipe(db, recipe.RecipeID, recipe)
+			if err != nil {
+				db.Close()
+				return
+			}
+			recipes = append(recipes, recipe)
+		}
+	}
+	db.Close()
+	return
 }

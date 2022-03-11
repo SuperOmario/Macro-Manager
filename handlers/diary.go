@@ -20,12 +20,11 @@ func GetAllDiaryEntriesForUser(c *gin.Context) {
 }
 
 func GetDiaryEntriesByDate(c *gin.Context) {
-	var date models.DiaryDate
-	err := c.BindJSON(&date)
-	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, err)
+	var date string = c.Param("date")
+	if date == "" {
+		c.IndentedJSON(http.StatusBadRequest, date)
 	} else {
-		diaryEntries, err := controllers.GetDiaryEntriesByDate(date.Date)
+		diaryEntries, err := controllers.GetDiaryEntriesByDate(date)
 		if err != nil {
 			c.IndentedJSON(http.StatusInternalServerError, err)
 		} else {
@@ -48,6 +47,17 @@ func CreateDiaryEntry(c *gin.Context) {
 		} else {
 			c.IndentedJSON(http.StatusOK, diaryEntryID)
 		}
+	}
+}
+
+func CreateDiaryEntries(c *gin.Context) {
+	var diariesRequest []models.RecipeMultipleRequest
+	err := c.BindJSON(&diariesRequest)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		controllers.InsertDiaryEntries(diariesRequest)
+		c.IndentedJSON(http.StatusOK, "ok")
 	}
 }
 

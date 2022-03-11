@@ -14,6 +14,9 @@ func initialiseRoutes() {
 	//food
 	//GET
 	router.GET("/food", handlers.GetUserFoodProducts)
+	router.GET("/food/ingredients", handlers.GetListedFoods)
+	// should be a get request but Android doesn't allow GET requests with bodies
+	router.POST("/food/ingredients", handlers.GetListedFoods)
 
 	//POST
 	router.POST("/food", handlers.CreateCustomFood)
@@ -29,12 +32,17 @@ func initialiseRoutes() {
 	//GET
 	router.GET("recipe", handlers.GetRecipesForUser)
 	router.GET("recipe/:id", handlers.GetRecipeById)
+	router.GET("recipe/ingredients/:id", handlers.GetRecipeIngredientsByID)
+	router.GET("recipe/recipes", handlers.GetListedRecipes)
+	// should be a get request but Android doesn't allow GET requests with bodies
+	router.POST("/recipe/recipes", handlers.GetListedRecipes)
 
 	//POST
 	router.POST("/recipe", handlers.CreateRecipe)
 
 	//PATCH
-	router.PATCH("/recipe/food/:id", handlers.AddRecipeIngredient)
+	router.PATCH("/recipe/ingredient/:id", handlers.AddRecipeIngredient)
+	router.PATCH("/recipe/ingredients", handlers.UpdateIngredients)
 	router.PATCH("/recipe/details/:id", handlers.UpdateRecipe)
 
 	//DELETE
@@ -44,10 +52,13 @@ func initialiseRoutes() {
 	//diary routes
 	//GET
 	router.GET("/diary", handlers.GetAllDiaryEntriesForUser)
-	router.GET("/diary/date", handlers.GetDiaryEntriesByDate)
+	router.GET("/diary/:date", handlers.GetDiaryEntriesByDate)
+	// should be a get request but Android doesn't allow GET requests with bodies
+	router.POST("/diary/:date", handlers.GetDiaryEntriesByDate)
 
 	//POST
 	router.POST("/diary", handlers.CreateDiaryEntry)
+	router.POST("/diary/diaries", handlers.CreateDiaryEntries)
 
 	//PATCH
 	router.PATCH("diary/:id", handlers.UpdateDiaryEntry)

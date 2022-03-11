@@ -131,3 +131,47 @@ func GetRecipeById(c *gin.Context) {
 		}
 	}
 }
+
+func GetRecipeIngredientsByID(c *gin.Context) {
+	recipeId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		ingredients, err := controllers.GetRecipeIngredientsByID(recipeId)
+		if err != nil {
+			c.IndentedJSON(http.StatusNoContent, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, ingredients)
+		}
+	}
+}
+
+func UpdateIngredients(c *gin.Context) {
+	var ingredients models.IFRRequest
+	err := c.BindJSON(&ingredients)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		err = controllers.UpdateIngredients(ingredients)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		} else {
+			c.IndentedJSON(http.StatusOK, ingredients)
+		}
+	}
+}
+
+func GetListedRecipes(c *gin.Context) {
+	// var ids models.FoodList
+	var ids []models.RecipeList
+	err := c.BindJSON(&ids)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		foods, err := controllers.GetListedRecipes(ids[0].RecipeIDs)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		}
+		c.IndentedJSON(http.StatusOK, foods)
+	}
+}
