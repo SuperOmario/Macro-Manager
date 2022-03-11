@@ -114,7 +114,7 @@ func GetDiaryEntriesByDate(date string) (diaryEntries models.DiaryEntries, err e
 	}
 
 	//must make user id dynamic *TO DO*
-	rows, err := db.Query("SELECT * FROM diary_entry WHERE date=$1 AND user_id=1", date)
+	rows, err := db.Query("SELECT * FROM diary_entry WHERE date=$1 AND user_id=1 ORDER BY meal", date)
 	if err != nil {
 		db.Close()
 		return
