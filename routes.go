@@ -53,6 +53,8 @@ func initialiseRoutes() {
 	//GET
 	router.GET("/diary", handlers.GetAllDiaryEntriesForUser)
 	router.GET("/diary/date", handlers.GetDiaryEntriesByDate)
+	// should be a get request but Android doesn't allow GET requests with bodies
+	router.POST("/diary/date", handlers.GetDiaryEntriesByDate)
 
 	//POST
 	router.POST("/diary", handlers.CreateDiaryEntry)
