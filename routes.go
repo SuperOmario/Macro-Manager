@@ -33,6 +33,7 @@ func initialiseRoutes() {
 	router.GET("recipe", handlers.GetRecipesForUser)
 	router.GET("recipe/:id", handlers.GetRecipeById)
 	router.GET("recipe/ingredients/:id", handlers.GetRecipeIngredientsByID)
+	router.GET("recipe/recipes", handlers.GetListedRecipes)
 
 	//POST
 	router.POST("/recipe", handlers.CreateRecipe)

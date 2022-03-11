@@ -160,3 +160,15 @@ func UpdateIngredients(c *gin.Context) {
 		}
 	}
 }
+
+func GetListedRecipes(c *gin.Context) {
+	// var ids models.FoodList
+	var ids []models.RecipeList
+	err := c.BindJSON(&ids)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		foods := controllers.GetListedFoods(ids[0].RecipeIDs)
+		c.IndentedJSON(http.StatusOK, foods)
+	}
+}
