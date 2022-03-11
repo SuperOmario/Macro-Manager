@@ -295,3 +295,33 @@ func UpdateIngredients(ingredients models.IFRRequest) error {
 	db.Close()
 	return err
 }
+
+func GetListedRecipes(ids []int) (recipes []models.RecipeDetails, err error) {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		db.Close()
+		log.Println(err)
+	}
+	var userId int64 = 1
+	// must change user id to be dynamic when implementing that feature *TO DO*
+	rows, err := db.Query("SELECT recipe_id, title, serving_size FROM recipe WHERE user_id=$1 AND ingredient_id = ANY($2)", userId, pq.Array(ids))
+	if err != nil {
+		db.Close()
+		return
+	} else {
+		defer rows.Close()
+		for rows.Next() {
+			var recipe models.RecipeDetails
+			rows.Scan(&recipe.RecipeID, &recipe.Title, &recipe.ServingSize)
+			recipe, err = getTotalNutrimentsRecipe(db, recipe.RecipeID, recipe)
+			if err != nil {
+				db.Close()
+				return
+			}
+			recipes = append(recipes, recipe)
+		}
+	}
+	db.Close()
+	return
+}
