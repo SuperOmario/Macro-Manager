@@ -168,7 +168,10 @@ func GetListedRecipes(c *gin.Context) {
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, err)
 	} else {
-		foods := controllers.GetListedFoods(ids[0].RecipeIDs)
+		foods, err := controllers.GetListedRecipes(ids[0].RecipeIDs)
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, err)
+		}
 		c.IndentedJSON(http.StatusOK, foods)
 	}
 }
