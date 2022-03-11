@@ -56,6 +56,7 @@ func initialiseRoutes() {
 
 	//POST
 	router.POST("/diary", handlers.CreateDiaryEntry)
+	router.POST("/diary/diaries", handlers.CreateDiaryEntries)
 
 	//PATCH
 	router.PATCH("diary/:id", handlers.UpdateDiaryEntry)

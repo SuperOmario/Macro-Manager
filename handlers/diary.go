@@ -51,6 +51,17 @@ func CreateDiaryEntry(c *gin.Context) {
 	}
 }
 
+func CreateDiaryEntries(c *gin.Context) {
+	var diariesRequest []models.RecipeMultipleRequest
+	err := c.BindJSON(&diariesRequest)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err)
+	} else {
+		controllers.InsertDiaryEntries(diariesRequest)
+		c.IndentedJSON(http.StatusOK, "ok")
+	}
+}
+
 func UpdateDiaryEntry(c *gin.Context) {
 	var diaryUpdate models.DiaryUpdate
 	ID, err := strconv.ParseInt(c.Param("id"), 10, 64)

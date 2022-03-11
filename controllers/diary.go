@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -166,6 +168,32 @@ func InsertDiaryEntry(recipeId int64, servings float32, date string, meal string
 	db.Close()
 
 	return
+}
+
+func InsertDiaryEntries(recipes []models.RecipeMultipleRequest) {
+	godotenv.Load()
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Print(err)
+	}
+
+	var queryBuilder strings.Builder
+	queryBuilder.WriteString("INSERT INTO diary_entry (user_id, recipe_id, date, meal, servings) VALUES ")
+	vals := []interface{}{}
+	i := 1
+	for _, recipe := range recipes {
+		queryBuilder.WriteString("(1, $" + strconv.Itoa(i) + ", $" + strconv.Itoa(i+1) + ", $" + strconv.Itoa(i+2) + ", $" + strconv.Itoa(i+3) + "),")
+		vals = append(vals, recipe.RecipeId, recipe.Date, recipe.Meal, recipe.Servings)
+		i += 4
+	}
+
+	var sqlStr = queryBuilder.String()[0 : len(queryBuilder.String())-1]
+
+	_, err = db.Exec(sqlStr, vals...)
+	if err != nil {
+		log.Print(err)
+	}
+	db.Close()
 }
 
 func UpdateDiaryEntry(ID int64, servings float32) error {
