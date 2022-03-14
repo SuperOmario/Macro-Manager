@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 	"github.com/lib/pq"
 )
 
 //checks if food is already in the current users pantry and if not inserts it into the database
-func InsertFood(food models.Food, upc string) (id string, err error) {
+func InsertFood(food models.Food, upc string) (id int64, err error) {
 	var returnedId int64
 	godotenv.Load()
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
@@ -43,10 +42,11 @@ func InsertFood(food models.Food, upc string) (id string, err error) {
 			} else {
 				ingredient := models.Ingredient{IngredientID: returnedId, Servings: 1}
 				InsertRecipe(food.Title, food.Serving_Size, ingredient)
+				id = returnedId
 				return
 			}
 		} else {
-			id = strconv.Itoa(int(foodPlaceHolder.IngredientID))
+			id = foodPlaceHolder.IngredientID
 			fmt.Println("Food already saved for this user")
 			db.Close()
 			return
