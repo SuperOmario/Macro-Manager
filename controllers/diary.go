@@ -135,6 +135,7 @@ func GetDiaryEntriesByDate(date string) (diaryEntries models.DiaryEntries, err e
 			diaryEntry.Meal = meal
 			diaryEntry.DiaryEntryID = ID
 			diaryEntry.RecipeID = RecipeID
+			err = db.QueryRow("SELECT title FROM recipe WHERE recipe_id=$1 AND user_id=1", RecipeID).Scan(&diaryEntry.Date)
 			diaryEntry.Servings = servings
 			diaryEntries = append(diaryEntries, diaryEntry)
 			if err != nil {
