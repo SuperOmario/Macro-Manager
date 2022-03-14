@@ -55,7 +55,7 @@ func GetFoodProduct(c *gin.Context) {
 		if err != nil {
 			c.IndentedJSON(http.StatusInternalServerError, err)
 		} else {
-			food.IngredientID, _ = strconv.ParseInt(id, 10, 64)
+			food.IngredientID = id
 			c.IndentedJSON(http.StatusOK, food)
 		}
 
